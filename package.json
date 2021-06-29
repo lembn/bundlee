@@ -1,0 +1,13 @@
+{
+  "name": "js-bundler",
+  "version": "1.0.0",
+  "description": "Bundle source code and npm modules into a distribution folder",
+  "main": "src/bundler.js",
+  "keywords": [],
+  "author": "Lemuel Bodi-Ngwala",
+  "license": "ISC",
+  "dependencies": {
+    "fs-extra": "^10.0.0",
+    "yargs": "^17.0.1"
+  }
+}
