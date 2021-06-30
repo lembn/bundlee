@@ -47,8 +47,8 @@ module.exports = async function prompt(options) {
     },
   ]);
 
-  var extras = {};
-  for (var key in options) {
+  let extras = {};
+  for (let key in options) {
     if (!(key in settings)) extras[key] = options[key];
   }
 

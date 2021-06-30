@@ -8,8 +8,12 @@ A CLI to bundle source code and node modules into a distribution folder
 
 # TODO
 
-- Add flags for all interactive options
-- Add progress bar
-- Add colours (winston?)
+- Add progress bar (use tick) https://www.npmjs.com/package/progress
+- Add summary report (summary has report of skipped files, total files copied, time taken, etc)
+- make 'bundling' and preparing text do the . -> .. -> ... animation thing with the elipses
+- make sure ctrl C quit is safe
 - Add automatic local dependency update
+- https://www.npmjs.com/package/folder-hash for hashing
+- update local dependencies after bundle has been copied
+- make sure paths are folders and not files
 - publish
