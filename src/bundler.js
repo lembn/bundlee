@@ -19,13 +19,7 @@ const logger = winston.createLogger({
   ],
 });
 
-let reportData = {};
-let index;
-
-const milToSec = (t) => t / 1000;
-const convertBytes = (bytes) => bytes / (1000 ^ index);
-const getTotalBundleSize = () => reportData.srcInfo.size + reportData.modulesInfo.size;
-const lerp = (a, b) => a + (b - a) * 0.01; //0.01 is smoothing
+const units = ["B", "kB", "MB", "GB"];
 
 async function getAllFiles(dirPath, allFiles = []) {
   let currentFiles = await fs.readdir(dirPath);
@@ -47,40 +41,11 @@ async function getDirInfo(dirPath) {
   return { fileCount: files.length, size: totalSize };
 }
 
-//Based on: https://gist.github.com/mrchantey/1c99d909836c65e8ac438d2bae2f09d2
-async function report(bar) {
-  //calculate sizes
-  const currentSize = (await getDirInfo(reportData.output)).size;
-  const bytesWritten = currentSize - reportData.lastSize;
-  if (bytesWritten === 0) return;
-  reportData.lastSize = currentSize;
-  const progress = currentSize / getTotalBundleSize();
-
-  //calculate times
-  const currentTime = milToSec(Date.now());
-  const deltaT = currentTime - reportData.lastTime;
-  reportData.lastTime = currentTime;
-
-  //calculate rates
-  const writeRate = convertBytes(bytesWritten) / deltaT; //How much data was written / how long it took = rate
-  reportData.writeRate = lerp(reportData.writeRate, writeRate);
-  const remainingSecs = (1 / reportData.writeRate) * convertBytes(getTotalBundleSize() - currentSize); //How long it takes to write * how much is left
-
-  bar.tick(bytesWritten, {
-    progress: Math.round(progress * 100),
-    //rem: Math.round(remainingSecs),
-    //_rate: Math.round(writeRate),
-  });
-}
-
-async function report2(progress, bar) {
-  const bytesWritten = progress.completedSize - reportData.currentSize;
-  reportData.currentSize = progress.completedSize;
-  bar.tick(bytesWritten, {
-    progress: Math.round(progress.percent * 100),
-    //rem: Math.round(remainingSecs),
-    //_rate: Math.round(writeRate),
-  });
+async function report(progress, bar) {
+  const { completedSize: totalWritten } = progress;
+  const bytesWritten = totalWritten - (module.currentSize || 0);
+  module.currentSize = totalWritten;
+  bar.tick(bytesWritten);
 }
 
 module.exports = async function (options) {
@@ -88,9 +53,10 @@ module.exports = async function (options) {
     const { output, src, modules, fast } = options;
     const srcLoc = `${output}/${src.split("/").pop()}`;
     const modulesLoc = `${output}/${modules.split("/").pop()}`;
-    const spinner = ora("Preparing...");
 
+    //Setup output folder(s)
     try {
+      logger.info("Peparing bundle output location.");
       await fs.stat(output);
       logger.info("Output folder found.");
       await fs.remove(output);
@@ -106,60 +72,42 @@ module.exports = async function (options) {
       logger.info("Created output location.");
     }
 
-    spinner.stop();
+    let start;
+    let totalSize;
+    let totalFiles;
 
-    let intervalID;
+    //Progress bar
     if (!fast) {
-      spinner.start("Counting...");
-      reportData.output = output;
-      reportData.srcInfo = await getDirInfo(src);
-      reportData.modulesInfo = await getDirInfo(modules);
-      reportData.startTime = reportData.lastTime = milToSec(Date.now());
-      reportData.lastSize = 0;
-      reportData.writeRate = 0;
-      index = Math.floor(getTotalBundleSize().toString().length / 3);
+      const spinner = ora("Preparing...");
+      let srcInfo = await getDirInfo(src);
+      let modulesInfo = await getDirInfo(modules);
+      totalSize = srcInfo.size + modulesInfo.size;
+      totalFiles = srcInfo.fileCount + modulesInfo.fileCount;
+      start = Date.now();
+      let index = Math.floor(totalSize.toString().length / 3);
       spinner.stop();
       logger.info("Count complete.");
 
-      let unit;
-      switch (index) {
-        case 0:
-          unit = "B";
-          break;
-        case 1:
-          unit = "kB";
-          break;
-        case 2:
-          unit = "MB";
-          break;
-        default:
-          unit = "GB";
-      }
+      let unit = units[index];
 
       logger.info("Bundling...");
-      const bar = new ProgressBar(`[:bar] :progress% @:rate${unit}/s :etas remaining    `, {
-        total: getTotalBundleSize(),
+      const bar = new ProgressBar(`[:bar] :percent @:rate${unit}/s :etas remaining    `, {
+        total: totalSize,
         head: "||",
         incomplete: "_",
       });
 
-      reportData.currentSize = 0;
-
-      await cpy(src, srcLoc).on("progress", (progress) => report2(progress, bar));
-      await cpy(modules, modulesLoc).on("progress", (progress) => report2(progress, bar));
+      await cpy([src, modules], output, { parents: true }).on("progress", (progress) => report(progress, bar));
+      end = Date.now();
+      bar.update(1);
     } else logger.info("Bundling...");
 
-    //await fs.copy(src, srcLoc, { overwrite: true });
-    //await fs.copy(modules, modulesLoc, { overwrite: true });
-
+    await cpy([src, modules], output, { parents: true });
     if (!fast) {
-      clearInterval(intervalID);
-      //sumary
+      //summary
     }
-
     logger.info("Bundle Complete.");
   } catch (error) {
     logger.error(error);
-    return;
   }
 };
