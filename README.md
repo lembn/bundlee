@@ -6,17 +6,31 @@ A CLI to bundle source code and node modules into a distribution folder
 
 `js-bunlder` requires all the package's source code to be in one folder. Likewise, all installed node modules should be contained within a single folder. The contents of these folders are copied into the `dist` folder with their internal structure preserved. Any local libraries used in the module should be packaged into a node package (with `npm init`) and installed as a local dependency so they will be contained within the main package's node modules.
 
+> _NOTE: `js-bundler` updates the local packages in bundle's `node_modules` **NOT** the main `node_modules` folder. This is why it is recommended to run from bundle when using `js-bundler`_
+
 # TODO
 
-- write rate estimation is very wrong, its making eta wrong too
-- is counting bytes of folder so slow that it can't keep up
+- fix progress bar rate (its currently always in bytes)
 
-- do we even need async?
+  - maybe do this by calling tick with the MB value rather than the byte value?
+  - maybe use this progress bar instead? https://www.npmjs.com/package/cli-progress
+
+- do we even need async? eliminate where possible
 - test fast/slow interactive/non
 - remove tick option
-- Add summary report (summary has report of skipped files, total files copied, time taken, etc) use reportData.startTime
+
+- Add summary report
+
+  - total files copied
+  - time taken
+  - add 'bundled to: [path]' so users can copy and paste the path to their dist folder
+
+- add silent mode
+
 - make sure paths are folders and not files
 - make sure ctrl C quit is safe
+  - test with(out) npm scripts
+- quit on fail
 - Add automatic local dependency update
 - https://www.npmjs.com/package/folder-hash for hashing
 - update local dependencies after bundle has been copied
