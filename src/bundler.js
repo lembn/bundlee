@@ -1,6 +1,8 @@
 const fs = require("fs-extra");
 const winston = require("winston");
 const { format, transports } = require("winston");
+const ProgressBar = require("progress");
+const ora = require("ora");
 
 const logger = winston.createLogger({
   transports: [
@@ -14,16 +16,12 @@ const logger = winston.createLogger({
 });
 
 let reportData = {};
+let index;
 
 const milToSec = (t) => t / 1000;
+const convertBytes = (bytes) => bytes / (1000 ^ index);
 const getTotalBundleSize = () => reportData.srcInfo.size + reportData.modulesInfo.size;
 const lerp = (a, b) => a + (b - a) * 0.1;
-
-function convertBytes(bytes) {
-  index = Math.floor(bytes.toString().length / 3);
-  index = Math.max(1, index);
-  return bytes / (1000 ^ index);
-}
 
 async function getAllFiles(dirPath, allFiles = []) {
   files = await fs.readdir(dirPath);
@@ -42,6 +40,14 @@ async function getDirInfo(dirPath) {
   let totalSize = 0;
   files.forEach((filePath) => (totalSize += await fs.stat(filePath).size));
   return { fileCount: files.length, size: totalSize };
+}
+
+function update(data, bar) {
+  bar.tick(data.currentSize, {
+    progress: data.progress,
+    rem: data.remainingSecs,
+    _rate: data.writeRate,
+  });
 }
 
 //Based on: https://gist.github.com/mrchantey/1c99d909836c65e8ac438d2bae2f09d2
@@ -64,6 +70,7 @@ async function report(cb) {
   const remainingSecs = (1 / reportData.speed) * convertBytes(getTotalBundleSize() - currentSize); //How long it takes to write * how much is left
 
   cb({
+    currentSize,
     progress,
     writeRate,
     remainingSecs,
@@ -73,11 +80,9 @@ async function report(cb) {
 module.exports = async function (options) {
   try {
     const { output, src, modules, tick, fast } = options;
-
     const srcLoc = `${output}/${src.split("/").pop()}`;
     const modulesLoc = `${output}/${modules.split("/").pop()}`;
-
-    logger.info("Preparing...");
+    const spinner = ora("Preparing...");
 
     try {
       await fs.stat(output);
@@ -92,9 +97,11 @@ module.exports = async function (options) {
       logger.info("Created output location.");
     }
 
+    spinner.stop();
+
     let intervalID;
     if (!fast) {
-      logger.info("Counting files");
+      spinner.start("Counting...");
       reportData.output = output;
       reportData.srcInfo = await getDirInfo(src);
       reportData.modulesInfo = await getDirInfo(modules);
@@ -102,16 +109,47 @@ module.exports = async function (options) {
       reportData.lastSize = 0;
       reportData.lastTime = startTime;
       reportData.speed = 0;
-      intervalID = setInterval(() => report(update), 1000 / tick);
+      index = Math.floor(bytes.toString().length / 3);
+      spinner.stop();
+      logger.info("Count complete.");
     }
 
     logger.info("Preperation complete.");
-    logger.info("Bundling...");
+    spinner.start("Bundling...");
+
+    if (!fast) {
+      let unit;
+      switch (index) {
+        case 0:
+          unit = "B";
+          break;
+        case 1:
+          unit = "kB";
+          break;
+        case 2:
+          unit = "MB";
+          break;
+        default:
+          unit = "GB";
+      }
+
+      const bar = new ProgressBar(`[:bar] :progress% @:_rate${unit}/s :rems remaining    `, {
+        total: getTotalBundleSize(),
+        head: "||",
+        incomplete: "_",
+      });
+
+      intervalID = setInterval(() => report(() => update(bar)), 1000 / tick);
+    }
 
     await fs.copy(src, srcLoc, { overwrite: true });
     await fs.copy(modules, modulesLoc, { overwrite: true });
-    if (intervalID) clearInterval(intervalID);
 
+    if (!fast) {
+      clearInterval(intervalID);
+    }
+
+    spinner.stop();
     logger.info("Bundle Complete.");
   } catch (error) {
     logger.error(error);
