@@ -2,8 +2,17 @@
   "name": "js-bundler",
   "version": "1.0.0",
   "description": "A CLI to bundle source code and node modules into a distribution folder",
-  "main": "src/bundler.js",
-  "keywords": [],
+  "main": "src/index.js",
+  "bin": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": [
+    "bundle",
+    "pack",
+    "distribution",
+    "deploy"
+  ],
   "author": "Lemuel Bodi-Ngwala",
   "license": "ISC",
   "dependencies": {
@@ -11,5 +20,13 @@
     "inquirer": "^8.1.1",
     "is-valid-path": "^0.1.1",
     "yargs": "^17.0.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lembn/js-bundler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lembn/js-bundler/issues"
+  },
+  "homepage": "https://github.com/lembn/js-bundler#readme"
 }
