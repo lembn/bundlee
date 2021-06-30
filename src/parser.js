@@ -12,19 +12,19 @@ yargs.option("i", {
   alias: "interactive",
   describe: "Run in interactive mode. Will be disabled if any other flags/options are present",
   type: "boolean",
-  default: true,
+  default: defaults.interactive,
 });
 yargs.option("f", {
   alias: "fast",
   describe: "Run in fast mode",
   type: "boolean",
-  default: false,
+  default: defaults.fast,
 });
 yargs.option("t", {
   alias: "tick",
   describe: "Set tick rate of progress bar",
   type: "number",
-  default: 10,
+  default: defaults.tick,
 });
 yargs.option("o", {
   alias: "output",
@@ -49,9 +49,9 @@ yargs.option("m", {
 });
 
 yargs.example([
-  ["$0 -f -o ./somewhere/dist", "Use custom output folder and run in fast mode"],
+  ["$0", "Run with defualts"],
   ["$0 -i", "Run in interactive mode"],
-  ["$0", "Will also run in interactive mode"],
+  ["$0 -f -o ./somewhere/dist", "Use custom output folder and run in fast mode"],
 ]);
 
 yargs.help();
