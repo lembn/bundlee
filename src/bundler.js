@@ -2,9 +2,10 @@ const fs = require("fs-extra");
 const path = require("path");
 const winston = require("winston");
 const { format, transports } = require("winston");
-const ProgressBar = require("progress");
+const { Bar } = require("cli-progress");
 const ora = require("ora");
 const cpy = require("cpy");
+const chalk = require("chalk");
 const { summarise } = require("./prompt");
 
 const label = "js-bundler";
@@ -45,10 +46,14 @@ async function getDirInfo(dirPath) {
 }
 
 async function report(progress, bar) {
-  const { completedSize: totalWritten } = progress;
+  const { completedSize: totalWritten, start, unit } = progress;
   const bytesWritten = totalWritten - (module.currentSize || 0);
   module.currentSize = totalWritten;
-  bar.tick(bytesWritten);
+
+  const speed = Math.round(bar.value / ((Date.now() - start) / 1000));
+  bar.increment(bytesWritten, {
+    speed: `${speed} ${unit}`,
+  });
 }
 
 module.exports = async function (options) {
@@ -57,6 +62,7 @@ module.exports = async function (options) {
   try {
     const srcLoc = `${output}/${src.split("/").pop()}`;
     const modulesLoc = `${output}/${modules.split("/").pop()}`;
+    console.log();
 
     //Setup output folder(s)
     try {
@@ -72,7 +78,7 @@ module.exports = async function (options) {
       logger.info(`Creating:\n${output}\n${srcLoc}\n${modulesLoc}`);
       fs.mkdir(output);
       fs.mkdir(srcLoc);
-      fs.mkdir(modulesLoc);
+      await fs.mkdir(modulesLoc);
       logger.info("Created output location.");
     }
 
@@ -80,31 +86,41 @@ module.exports = async function (options) {
 
     //Progress bar
     if (!fast) {
-      spinner.text = "Preparing...";
+      spinner.start("Preparing...");
       var start = Date.now();
-      let srcInfo = await getDirInfo(src);
-      let modulesInfo = await getDirInfo(modules);
+      const srcInfo = await getDirInfo(src);
+      const modulesInfo = await getDirInfo(modules);
       var totalFiles = srcInfo.fileCount + modulesInfo.fileCount;
       var totalSize = srcInfo.size + modulesInfo.size;
-      let index = Math.floor(totalSize.toString().length / 3);
+      const index = Math.floor(totalSize.toString().length / 3);
       spinner.stop();
-      logger.info("Count complete.");
+      logger.info("Calculations complete.");
 
       var unit = units[index];
 
       logger.info("Bundling...");
-      const bar = new ProgressBar(`[:bar] :percent @:rate${unit}/s :etas remaining    `, {
-        total: totalSize,
-        head: "||",
-        incomplete: "_",
+      console.log();
+
+      const bar = new Bar({
+        format: `Bundle Progress | ${chalk.cyan("{bar}")} | {percentage}% || @{speed} || ETA: {eta}s`,
+        barCompleteChar: "\u2588",
+        barIncompleteChar: "\u2591",
+        hideCursor: true,
       });
 
-      await cpy([src, modules], output, { parents: true }).on("progress", (progress) => report(progress, bar));
-      bar.update(1);
+      bar.start(totalSize, 0, {
+        speed: "N/A",
+      });
+
+      const bundleStart = Date.now();
+      await cpy([src, modules], output, { parents: true }).on("progress", (progress) => report({ bundleStart, unit, ...progress }, bar));
+      bar.update(totalSize);
+      bar.stop();
       summarise(true, `[${label}]:: Bundled to '${output}'`, Date.now() - start, totalFiles, totalSize, unit);
     } else {
-      spinner.text = "Bundling...";
+      spinner.start("Bundling...");
       await cpy([src, modules], output, { parents: true });
+      spinner.stop();
       logger.info("Bundle Complete.");
     }
   } catch (error) {

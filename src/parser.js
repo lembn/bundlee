@@ -16,15 +16,9 @@ yargs.option("i", {
 });
 yargs.option("f", {
   alias: "fast",
-  describe: "Run in fast mode",
+  describe: "Run in fast mode (disables progress tracking and reports)",
   type: "boolean",
   default: defaults.fast,
-});
-yargs.option("t", {
-  alias: "tick",
-  describe: "Set tick rate of progress bar",
-  type: "number",
-  default: defaults.tick,
 });
 yargs.option("o", {
   alias: "output",

@@ -1,6 +1,7 @@
 const inquirer = require("inquirer");
 const isValid = require("is-valid-path");
 const defaults = require("./defaults");
+const chalk = require("chalk");
 
 const convertBackslashes = (input) => input.replace(/\\/g, "/");
 

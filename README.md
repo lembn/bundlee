@@ -10,26 +10,16 @@ A CLI to bundle source code and node modules into a distribution folder
 
 # TODO
 
-- fix progress bar rate (its currently always in bytes)
-
-  - maybe do this by calling tick with the MB value rather than the byte value?
-  - maybe use [this](https://www.npmjs.com/package/cli-progress) progress bar instead?
-
-- test summary on fail
-- do we even need async? eliminate where possible
-- test fast/slow interactive/non
-- remove tick option
-
+- on fail, do summary and quit
 - add silent mode
-
 - make sure paths are folders and not files
 - make sure ctrl C quit is safe
+
   - test with(out) npm scripts
-- quit on fail
 
 - Add automatic local dependency update
 - [hashing](https://www.npmjs.com/package/folder-hash)
 - update local dependencies after bundle has been copied
 - break module.exports function into smaller functions if dependency update adds alot of code
-- add option to log to file
+- add option to log to file (find a way to log summary aswell)
 - publish
