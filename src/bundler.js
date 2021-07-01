@@ -5,12 +5,15 @@ const { format, transports } = require("winston");
 const ProgressBar = require("progress");
 const ora = require("ora");
 const cpy = require("cpy");
+const { summarise } = require("./prompt");
+
+const label = "js-bundler";
 
 const logger = winston.createLogger({
   transports: [
     new transports.Console({
       format: format.combine(
-        format.label({ label: "js-bundler" }),
+        format.label({ label: label }),
         format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
         format.colorize(),
         format.printf((info) => `[${info.label}] |${info.timestamp}| ${info.level}: ${info.message}`)
@@ -49,8 +52,9 @@ async function report(progress, bar) {
 }
 
 module.exports = async function (options) {
+  const { output, src, modules, fast } = options;
+
   try {
-    const { output, src, modules, fast } = options;
     const srcLoc = `${output}/${src.split("/").pop()}`;
     const modulesLoc = `${output}/${modules.split("/").pop()}`;
 
@@ -72,23 +76,21 @@ module.exports = async function (options) {
       logger.info("Created output location.");
     }
 
-    let start;
-    let totalSize;
-    let totalFiles;
+    const spinner = ora();
 
     //Progress bar
     if (!fast) {
-      const spinner = ora("Preparing...");
+      spinner.text = "Preparing...";
+      var start = Date.now();
       let srcInfo = await getDirInfo(src);
       let modulesInfo = await getDirInfo(modules);
-      totalSize = srcInfo.size + modulesInfo.size;
-      totalFiles = srcInfo.fileCount + modulesInfo.fileCount;
-      start = Date.now();
+      var totalFiles = srcInfo.fileCount + modulesInfo.fileCount;
+      var totalSize = srcInfo.size + modulesInfo.size;
       let index = Math.floor(totalSize.toString().length / 3);
       spinner.stop();
       logger.info("Count complete.");
 
-      let unit = units[index];
+      var unit = units[index];
 
       logger.info("Bundling...");
       const bar = new ProgressBar(`[:bar] :percent @:rate${unit}/s :etas remaining    `, {
@@ -98,16 +100,15 @@ module.exports = async function (options) {
       });
 
       await cpy([src, modules], output, { parents: true }).on("progress", (progress) => report(progress, bar));
-      end = Date.now();
       bar.update(1);
-    } else logger.info("Bundling...");
-
-    await cpy([src, modules], output, { parents: true });
-    if (!fast) {
-      //summary
+      summarise(true, `[${label}]:: Bundled to '${output}'`, Date.now() - start, totalFiles, totalSize, unit);
+    } else {
+      spinner.text = "Bundling...";
+      await cpy([src, modules], output, { parents: true });
+      logger.info("Bundle Complete.");
     }
-    logger.info("Bundle Complete.");
   } catch (error) {
-    logger.error(error);
+    if (!fast) summarise(false, `[${label}]:: ${error}`, Date.now() - start, totalFiles, totalSize, unit);
+    logger.error("Bundle FAILED. Closing...");
   }
 };

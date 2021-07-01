@@ -15,13 +15,7 @@ A CLI to bundle source code and node modules into a distribution folder
   - maybe do this by calling tick with the MB value rather than the byte value?
   - maybe use [this](https://www.npmjs.com/package/cli-progress) progress bar instead?
 
-- Add summary report
-
-  - total files copied
-  - time taken
-  - add 'bundled to: [path]' so users can copy and paste the path to their dist folder
-  - [chalk?](https://github.com/chalk/chalk)
-
+- test summary on fail
 - do we even need async? eliminate where possible
 - test fast/slow interactive/non
 - remove tick option

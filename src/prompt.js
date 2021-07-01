@@ -10,7 +10,7 @@ const validate = (input) => {
   else return "Please enter a valid folder path";
 };
 
-module.exports = async function prompt(options) {
+module.exports.prompt = async function (options) {
   const settings = await inquirer.prompt([
     {
       name: "output",
@@ -53,4 +53,27 @@ module.exports = async function prompt(options) {
   }
 
   return { ...extras, ...settings };
+};
+
+module.exports.summarise = function (success, message, time, files, size, units) {
+  const addLine = (content) => console.log(`| ${content}`);
+  const getSpace = (length) => `${" ".repeat(length)}`;
+
+  const width = process.stdout.columns;
+  const bar = `${"=".repeat(width)}`;
+  const spaces = (width - 9) / 2;
+  const space1 = getSpace(Math.floor(spaces));
+  const space2 = getSpace(spaces % 1 === 0 ? spaces : Math.ceil(spaces));
+  const summary = `|${space1}${chalk.underline("SUMMARY")}${space2}|`;
+
+  console.log(`\n${bar}\n${summary}\n${bar}`);
+
+  addLine(`${success ? "✅ " : "❌ "} ${chalk.bold("BUNDLE")} ${success ? chalk.green("SUCCESS") : chalk.red("FAILED")}`);
+  addLine(`${chalk.bold("Messages:")} ${chalk.italic(message)}.`);
+  addLine(`${chalk.bold("Completed in:")} ${chalk.yellowBright(Math.round(time / 1000))} seconds.`);
+  addLine(
+    `${chalk.bold("Bundled")} ${chalk.yellowBright(files)} files. ${chalk.bold("TOTAL")}: ${chalk.yellowBright(size)} ${chalk.blue(units)}.`
+  );
+
+  console.log(`└ ${"─".repeat(width - 2)}`);
 };

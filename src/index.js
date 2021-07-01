@@ -2,7 +2,7 @@
 
 const parser = require("./parser");
 const bundle = require("./bundler");
-const prompt = require("./prompt");
+const { prompt } = require("./prompt");
 
 async function main(args) {
   args = args.interactive ? await prompt(args) : args;

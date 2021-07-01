@@ -16,6 +16,7 @@
   "author": "Lemuel Bodi-Ngwala",
   "license": "ISC",
   "dependencies": {
+    "chalk": "^4.1.1",
     "cpy": "^8.1.2",
     "fs-extra": "^10.0.0",
     "inquirer": "^8.1.1",
