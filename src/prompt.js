@@ -5,6 +5,7 @@ const chalk = require("chalk");
 const convertBackslashes = (input) => input.replace(/\\/g, "/");
 
 module.exports.prompt = async function (options) {
+  console.log();
   const settings = await inquirer.prompt([
     {
       name: "output",
@@ -31,13 +32,30 @@ module.exports.prompt = async function (options) {
       when: options.modules === defaults.modules,
     },
     {
+      name: "log",
+      message: "Where should logs be written to? ",
+      default: options.log,
+      validate: validate,
+      filter: convertBackslashes,
+      when: options.log === defaults.log,
+    },
+    {
       name: "fast",
       type: "list",
-      message: "Should is bundler run in fast mode? ",
+      message: "Should the bundler run in fast mode? ",
       choices: ["No", "Yes"],
       default: options.fast ? 1 : 0,
       loop: true,
       when: options.fast === defaults.fast,
+    },
+    {
+      name: "silent",
+      type: "list",
+      message: "Should the bundler run in silent mode? ",
+      choices: ["No", "Yes"],
+      default: options.silent ? 1 : 0,
+      loop: true,
+      when: options.silent === defaults.silent,
     },
   ]);
 

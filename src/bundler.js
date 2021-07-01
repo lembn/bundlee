@@ -11,20 +11,23 @@ const { summarise } = require("./prompt");
 const label = "js-bundler";
 const units = ["B", "kB", "MB", "GB"];
 
+const round1DP = (number) => Math.round(number * 10) / 10;
+const convertSize = (size) => round1DP(size / 1000 ** module.index);
+
 function getLogger(silent, logPath) {
   const logger = winston.createLogger();
 
-  if (!silent)
-    logger.add(
-      new transports.Console({
-        format: format.combine(
-          format.label({ label: label }),
-          format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-          format.colorize(),
-          format.printf((info) => `[${info.label}] |${info.timestamp}| ${info.level}: ${info.message}`)
-        ),
-      })
-    );
+  logger.add(
+    new transports.Console({
+      format: format.combine(
+        format.label({ label: label }),
+        format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+        format.colorize(),
+        format.printf((info) => `[${info.label}] |${info.timestamp}| ${info.level}: ${info.message}`)
+      ),
+      silent: silent,
+    })
+  );
 
   if (logPath)
     logger.add(
@@ -62,114 +65,133 @@ async function getDirInfo(dirPath) {
   return { fileCount: files.length, size: totalSize };
 }
 
-async function report(progress, bar) {
-  const { completedSize: totalWritten, start, unit } = progress;
-  const bytesWritten = totalWritten - (module.currentSize || 0);
-  module.currentSize = totalWritten;
+async function prepare(output, src, modules) {
+  const srcLoc = `${output}/${src.split("/").pop()}`;
+  const modulesLoc = `${output}/${modules.split("/").pop()}`;
 
-  const speed = Math.round(bar.value / ((Date.now() - start) / 1000));
-  bar.increment(bytesWritten, {
-    speed: `${speed} ${unit}`,
+  try {
+    console.log();
+    module.logger.info("Peparing bundle output location.");
+    await fs.stat(output);
+    module.logger.info("Output folder found.");
+    await fs.remove(output);
+    fs.mkdir(output);
+    fs.mkdir(srcLoc);
+    fs.mkdir(modulesLoc);
+  } catch (error) {
+    module.logger.warn(`Output location: '${output}' not found.`);
+    module.logger.info(`Creating:\n${output}\n${srcLoc}\n${modulesLoc}`);
+    fs.mkdir(output);
+    fs.mkdir(srcLoc);
+    await fs.mkdir(modulesLoc);
+    module.logger.info("Created output location.");
+  }
+}
+
+async function precaulcate(src, modules) {
+  module.start = Date.now();
+  module.srcInfo = await getDirInfo(src);
+  module.modulesInfo = await getDirInfo(modules);
+  module.totalFiles = module.srcInfo.fileCount + module.modulesInfo.fileCount;
+  module.totalSize = module.srcInfo.size + module.modulesInfo.size;
+  module.index = Math.floor(module.totalSize.toString().length / 3);
+  module.unit = units[module.index];
+  module.logger.info("Calculations complete.");
+}
+
+async function copySilent(output, src, modules) {
+  await cpy([src, modules], output, { parents: true });
+  module.logger.info("Bundle Complete.");
+  module.logger.info("Summary", {
+    success: true,
+    messages: `[${label}]:: Bundled to '${output}'`,
+    timeTaken: Date.now() - module.start,
+    fileCount: module.totalFiles,
+    sizeCount: convertSize(module.totalSize),
+    sizeUnits: module.unit,
   });
+}
+
+async function copyVerbose(output, src, modules) {
+  console.log();
+  const bar = new Bar({
+    format: `Bundle Progress | ${chalk.cyan("{bar}")} | {percentage}% || @{speed} || ETA: {eta}s`,
+    barCompleteChar: "\u2588",
+    barIncompleteChar: "\u2591",
+    hideCursor: true,
+  });
+  bar.start(module.totalSize, 0, {
+    speed: "N/A",
+  });
+
+  const start = Date.now();
+  await cpy([src, modules], output, { parents: true }).on("progress", (progress) => {
+    const bytesWritten = progress.completedSize - (module.currentSize || 0);
+    module.currentSize = progress.completedSize;
+
+    const speed = round1DP(convertSize(module.currentSize) / ((Date.now() - start) / 1000));
+    bar.increment(bytesWritten, {
+      speed: `${speed} ${module.unit}/s`,
+    });
+  });
+
+  bar.update(module.totalSize);
+  bar.stop();
+  summarise(
+    true,
+    `[${label}]:: Bundled to '${output}'`,
+    Date.now() - module.start,
+    module.totalFiles,
+    convertSize(module.totalSize),
+    module.unit
+  );
+}
+
+function fail(error, silent, fast) {
+  const time = module.start ? Date.now() - module.start : "NA";
+  const totalFiles = module.totalFiles || "NA";
+  const totalSize = module.totalSize || "NA";
+  const unit = module.unit || "NA";
+  if (silent)
+    module.logger.info("Summary", {
+      success: false,
+      messages: `[${label}]:: ${error}`,
+      timeTaken: time,
+      fileCount: totalFiles,
+      sizeCount: totalSize,
+      sizeUnits: unit,
+    });
+  else if (!fast) {
+    summarise(false, `[${label}]:: ${error}`, time, totalFiles, totalSize, unit);
+    module.logger.error("Closing...");
+  }
 }
 
 module.exports = async function (options) {
   const { output, src, modules, fast, silent, log } = options;
 
   try {
-    const logger = getLogger(silent, log);
-    const srcLoc = `${output}/${src.split("/").pop()}`;
-    const modulesLoc = `${output}/${modules.split("/").pop()}`;
-    console.log();
-
-    //Setup output folder(s)
-    try {
-      logger.info("Peparing bundle output location.");
-      await fs.stat(output);
-      logger.info("Output folder found.");
-      await fs.remove(output);
-      fs.mkdir(output);
-      fs.mkdir(srcLoc);
-      fs.mkdir(modulesLoc);
-    } catch (error) {
-      logger.warn(`Output location: '${output}' not found.`);
-      logger.info(`Creating:\n${output}\n${srcLoc}\n${modulesLoc}`);
-      fs.mkdir(output);
-      fs.mkdir(srcLoc);
-      await fs.mkdir(modulesLoc);
-      logger.info("Created output location.");
-    }
-
+    module.logger = getLogger(silent, log);
+    await prepare(output, src, modules);
     const spinner = ora();
 
     //Bundling
     if (!fast) {
-      //Precalculate
       spinner.start("Preparing...");
-      var start = Date.now();
-      const srcInfo = await getDirInfo(src);
-      const modulesInfo = await getDirInfo(modules);
-      var totalFiles = srcInfo.fileCount + modulesInfo.fileCount;
-      var totalSize = srcInfo.size + modulesInfo.size;
-      const index = Math.floor(totalSize.toString().length / 3);
-      var unit = units[index];
+      await precaulcate(src, modules);
       spinner.stop();
-      logger.info("Calculations complete.");
-      logger.info("Bundling...");
+      module.logger.info("Bundling...");
 
-      if (silent) {
-        await cpy([src, modules], output, { parents: true });
-        logger.info("Bundle Complete.");
-        logger.info("Summary", {
-          success: true,
-          messages: `[${label}]:: Bundled to '${output}'`,
-          timeTaken: Date.now() - start,
-          fileCount: totalFiles,
-          sizeCount: totalSize,
-          sizeUnits: unit,
-        });
-      } else {
-        console.log();
-        const bar = new Bar({
-          format: `Bundle Progress | ${chalk.cyan("{bar}")} | {percentage}% || @{speed} || ETA: {eta}s`,
-          barCompleteChar: "\u2588",
-          barIncompleteChar: "\u2591",
-          hideCursor: true,
-        });
-
-        bar.start(totalSize, 0, {
-          speed: "N/A",
-        });
-
-        const bundleStart = Date.now();
-        await cpy([src, modules], output, { parents: true }).on("progress", (progress) => report({ bundleStart, unit, ...progress }, bar));
-        bar.update(totalSize);
-        bar.stop();
-        summarise(true, `[${label}]:: Bundled to '${output}'`, Date.now() - start, totalFiles, totalSize, unit);
-      }
+      if (silent) await copySilent(output, src, modules);
+      else await copyVerbose(output, src, modules);
     } else {
+      //Fast Copy
       spinner.start("Bundling...");
       await cpy([src, modules], output, { parents: true });
       spinner.stop();
-      logger.info("Bundle Complete.");
+      module.logger.info("Bundle Complete.");
     }
   } catch (error) {
-    time = start ? Date.now() - start : "NA";
-    totalFiles = totalFiles || "NA";
-    totalSize = totalSize || "NA";
-    unit = unit || "NA";
-    if (silent)
-      logger.info("Summary", {
-        success: false,
-        messages: `[${label}]:: ${error}`,
-        timeTaken: time,
-        fileCount: totalFiles,
-        sizeCount: totalSize,
-        sizeUnits: unit,
-      });
-    else if (!fast) {
-      summarise(false, `[${label}]:: ${error}`, time, totalFiles, totalSize, unit);
-      logger.error("Closing...");
-    }
+    fail(error, silent, fast);
   }
 };

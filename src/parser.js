@@ -1,3 +1,4 @@
+const chalk = require("chalk");
 const yargonaut = require("yargonaut"); // yargonaut first!
 const yargs = require("yargs");
 const { validate, defaults } = require("./common");
@@ -21,13 +22,13 @@ yargs.check((args) => {
 
 yargs.option("i", {
   alias: "interactive",
-  describe: "Run in interactive mode. Will be disabled if any other flags/options are present",
+  describe: "Run in interactive mode.",
   type: "boolean",
   default: defaults.interactive,
 });
 yargs.option("f", {
   alias: "fast",
-  describe: "Run in fast mode (disables progress tracking and reports)",
+  describe: "Run in fast mode (disables progress tracking and reports, does not interfere with logging)",
   type: "boolean",
   default: defaults.fast,
 });
@@ -74,5 +75,6 @@ yargs.example([
 yargs.help();
 yargs.alias("h", "help");
 yargs.alias("v", "version");
+yargs.epilogue(chalk.whiteBright.italic("NOTE: file/folder paths passed into the bundler will be created if they do not exist."));
 
 module.exports = yargs;

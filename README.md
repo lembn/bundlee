@@ -10,8 +10,13 @@ A CLI to bundle source code and node modules into a distribution folder
 
 # TODO
 
-- test file logging and silent mode
-- break module.exports function into smaller functions
+- custom ETA now that we have steady rate calculation
+  - cos current ETA is very innacturate
+  - if custom one is still bad try using lerped rate values
+- hang on fail????
+- test the 3 copy methods
+
+  - toggle file logging on ALL of them
 
 - Add automatic local dependency update
 - [hashing](https://www.npmjs.com/package/folder-hash)
