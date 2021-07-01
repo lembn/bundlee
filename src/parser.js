@@ -1,12 +1,23 @@
 const yargonaut = require("yargonaut"); // yargonaut first!
 const yargs = require("yargs");
-const defaults = require("./defaults");
+const { validate, defaults } = require("./common");
 
 yargonaut.style("blue");
 yargonaut.helpStyle("green.underline");
 yargonaut.errorsStyle("red.bold");
 
 yargs.scriptName("js-bundler");
+
+yargs.check((args) => {
+  const paths = [args.output, args.src, args.modules];
+  if (args.log) paths.push(args.log);
+  let valid = true;
+  for (const i in paths) {
+    valid = validate(paths[i]);
+    if (valid !== true) break;
+  }
+  return valid;
+});
 
 yargs.option("i", {
   alias: "interactive",
@@ -20,6 +31,19 @@ yargs.option("f", {
   type: "boolean",
   default: defaults.fast,
 });
+yargs.option("s", {
+  alias: "silent",
+  describe: "Run in silent mode (disables console messages, does not interfere with file logging)",
+  type: "boolean",
+  default: defaults.silent,
+});
+yargs.option("l", {
+  alias: "log",
+  describe: "Set path to log file",
+  type: "string",
+  normalize: true,
+  default: defaults.log,
+});
 yargs.option("o", {
   alias: "output",
   describe: "Set output folder path",
@@ -27,8 +51,7 @@ yargs.option("o", {
   normalize: true,
   default: defaults.output,
 });
-yargs.option("s", {
-  alias: "src",
+yargs.option("src", {
   describe: "Set source code folder path",
   type: "string",
   normalize: true,

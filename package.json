@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "bin": "src/index.js",
   "scripts": {
-    "start": "node src/index.js -i"
+    "start": "node src/index.js -s"
   },
   "keywords": [
     "bundle",

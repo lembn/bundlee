@@ -1,15 +1,8 @@
 const inquirer = require("inquirer");
-const isValid = require("is-valid-path");
-const defaults = require("./defaults");
+const { validate, defaults } = require("./common");
 const chalk = require("chalk");
 
 const convertBackslashes = (input) => input.replace(/\\/g, "/");
-
-const validate = (input) => {
-  valid = isValid(input);
-  if (valid) return true;
-  else return "Please enter a valid folder path";
-};
 
 module.exports.prompt = async function (options) {
   const settings = await inquirer.prompt([

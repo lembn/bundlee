@@ -10,16 +10,10 @@ A CLI to bundle source code and node modules into a distribution folder
 
 # TODO
 
-- on fail, do summary and quit
-- add silent mode
-- make sure paths are folders and not files
-- make sure ctrl C quit is safe
-
-  - test with(out) npm scripts
+- test file logging and silent mode
+- break module.exports function into smaller functions
 
 - Add automatic local dependency update
 - [hashing](https://www.npmjs.com/package/folder-hash)
 - update local dependencies after bundle has been copied
-- break module.exports function into smaller functions if dependency update adds alot of code
-- add option to log to file (find a way to log summary aswell)
 - publish
