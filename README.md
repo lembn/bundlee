@@ -10,13 +10,7 @@ A CLI to bundle source code and node modules into a distribution folder
 
 # TODO
 
-- custom ETA now that we have steady rate calculation
-  - cos current ETA is very innacturate
-  - if custom one is still bad try using lerped rate values
-- hang on fail????
-- test the 3 copy methods
-
-  - toggle file logging on ALL of them
+- test file logging
 
 - Add automatic local dependency update
 - [hashing](https://www.npmjs.com/package/folder-hash)

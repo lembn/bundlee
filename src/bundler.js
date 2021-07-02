@@ -70,14 +70,13 @@ async function prepare(output, src, modules) {
   const modulesLoc = `${output}/${modules.split("/").pop()}`;
 
   try {
-    console.log();
     module.logger.info("Peparing bundle output location.");
     await fs.stat(output);
     module.logger.info("Output folder found.");
     await fs.remove(output);
     fs.mkdir(output);
     fs.mkdir(srcLoc);
-    fs.mkdir(modulesLoc);
+    await fs.mkdir(modulesLoc);
   } catch (error) {
     module.logger.warn(`Output location: '${output}' not found.`);
     module.logger.info(`Creating:\n${output}\n${srcLoc}\n${modulesLoc}`);
@@ -94,6 +93,8 @@ async function precaulcate(src, modules) {
   module.modulesInfo = await getDirInfo(modules);
   module.totalFiles = module.srcInfo.fileCount + module.modulesInfo.fileCount;
   module.totalSize = module.srcInfo.size + module.modulesInfo.size;
+  module.currentFiles = 0;
+  module.currentSize = 0;
   module.index = Math.floor(module.totalSize.toString().length / 3);
   module.unit = units[module.index];
   module.logger.info("Calculations complete.");
@@ -115,23 +116,27 @@ async function copySilent(output, src, modules) {
 async function copyVerbose(output, src, modules) {
   console.log();
   const bar = new Bar({
-    format: `Bundle Progress | ${chalk.cyan("{bar}")} | {percentage}% || @{speed} || ETA: {eta}s`,
+    format: `Bundle Progress | ${chalk.cyan("{bar}")} | {percentage}% || {speed} ${module.unit}/s || ETA: {_eta}s`,
     barCompleteChar: "\u2588",
     barIncompleteChar: "\u2591",
     hideCursor: true,
   });
   bar.start(module.totalSize, 0, {
     speed: "N/A",
+    _eta: "N/A",
   });
 
   const start = Date.now();
   await cpy([src, modules], output, { parents: true }).on("progress", (progress) => {
     const bytesWritten = progress.completedSize - (module.currentSize || 0);
     module.currentSize = progress.completedSize;
+    module.currentFiles = progress.completedFiles;
 
-    const speed = round1DP(convertSize(module.currentSize) / ((Date.now() - start) / 1000));
+    const speed = convertSize(module.currentSize) / ((Date.now() - start) / 1000);
+    const _eta = convertSize(module.totalSize - module.currentSize) / speed;
     bar.increment(bytesWritten, {
-      speed: `${speed} ${module.unit}/s`,
+      speed: round1DP(speed),
+      _eta: round1DP(_eta),
     });
   });
 
@@ -149,21 +154,23 @@ async function copyVerbose(output, src, modules) {
 
 function fail(error, silent, fast) {
   const time = module.start ? Date.now() - module.start : "NA";
-  const totalFiles = module.totalFiles || "NA";
-  const totalSize = module.totalSize || "NA";
+  const currentFiles = module.currentFiles === undefined ? "NA" : module.currentFiles;
+  const currentSize = module.currentSize === undefined ? "NA" : module.currentSize;
   const unit = module.unit || "NA";
   if (silent)
     module.logger.info("Summary", {
       success: false,
       messages: `[${label}]:: ${error}`,
       timeTaken: time,
-      fileCount: totalFiles,
-      sizeCount: totalSize,
+      fileCount: currentFiles,
+      sizeCount: currentSize,
       sizeUnits: unit,
     });
   else if (!fast) {
-    summarise(false, `[${label}]:: ${error}`, time, totalFiles, totalSize, unit);
+    summarise(false, `[${label}]:: ${error}`, time, currentFiles, currentSize, unit);
+    module.logger.on("finish", () => process.exit(1));
     module.logger.error("Closing...");
+    module.logger.end();
   }
 }
 
@@ -172,12 +179,13 @@ module.exports = async function (options) {
 
   try {
     module.logger = getLogger(silent, log);
+    if (!silent) console.log();
     await prepare(output, src, modules);
     const spinner = ora();
 
     //Bundling
     if (!fast) {
-      spinner.start("Preparing...");
+      if (!silent) spinner.start("Calculating...");
       await precaulcate(src, modules);
       spinner.stop();
       module.logger.info("Bundling...");
@@ -188,7 +196,7 @@ module.exports = async function (options) {
       //Fast Copy
       spinner.start("Bundling...");
       await cpy([src, modules], output, { parents: true });
-      spinner.stop();
+      if (!silent) spinner.stop();
       module.logger.info("Bundle Complete.");
     }
   } catch (error) {
