@@ -10,8 +10,6 @@ A CLI to bundle source code and node modules into a distribution folder
 
 # TODO
 
-- test file logging
-
 - Add automatic local dependency update
 - [hashing](https://www.npmjs.com/package/folder-hash)
 - update local dependencies after bundle has been copied

@@ -19,6 +19,7 @@ function getLogger(silent, logPath) {
 
   logger.add(
     new transports.Console({
+      name: "console",
       format: format.combine(
         format.label({ label: label }),
         format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
@@ -97,7 +98,6 @@ async function precaulcate(src, modules) {
   module.currentSize = 0;
   module.index = Math.floor(module.totalSize.toString().length / 3);
   module.unit = units[module.index];
-  module.logger.info("Calculations complete.");
 }
 
 async function copySilent(output, src, modules) {
@@ -142,14 +142,22 @@ async function copyVerbose(output, src, modules) {
 
   bar.update(module.totalSize);
   bar.stop();
-  summarise(
-    true,
-    `[${label}]:: Bundled to '${output}'`,
-    Date.now() - module.start,
-    module.totalFiles,
-    convertSize(module.totalSize),
-    module.unit
-  );
+
+  const msg = `[${label}]:: Bundled to '${output}'`;
+  const time = Date.now() - module.start;
+
+  summarise(true, msg, time, module.totalFiles, convertSize(module.totalSize), module.unit);
+  module.logger.transports.forEach((t) => {
+    if (t.name === "console") t.silent = true;
+  });
+  module.logger.info("Summary", {
+    success: true,
+    messages: msg,
+    timeTaken: time,
+    fileCount: module.totalFiles,
+    sizeCount: convertSize(module.totalSize),
+    sizeUnits: module.unit,
+  });
 }
 
 function fail(error, silent, fast) {
@@ -188,6 +196,7 @@ module.exports = async function (options) {
       if (!silent) spinner.start("Calculating...");
       await precaulcate(src, modules);
       spinner.stop();
+      module.logger.info("Calculations complete.");
       module.logger.info("Bundling...");
 
       if (silent) await copySilent(output, src, modules);
