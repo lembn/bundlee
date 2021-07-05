@@ -10,7 +10,12 @@ A CLI to bundle source code and node modules into a distribution folder
 
 # TODO
 
-- Add automatic local dependency update
-- [hashing](https://www.npmjs.com/package/folder-hash)
-- update local dependencies after bundle has been copied
+- test
+
+- add counter to update (current/total) files processed
+- add bundle.ignore functionality
+
+  - for the main/root package can have a bundle.ignore file which specifies all files the bundler shouldn't update OR COPY, this file can also functionality (special syntax) so the user can specify an local or non local packages they want to be ignored
+  - any bundle.ignore found in a local package being updated should be processed and will overwrite the main/root bundle.ignore for that package
+
 - publish

@@ -7,6 +7,7 @@ const ora = require("ora");
 const cpy = require("cpy");
 const chalk = require("chalk");
 const { summarise } = require("./prompt");
+const update = require("./updater");
 
 const label = "js-bundler";
 const units = ["B", "kB", "MB", "GB"];
@@ -188,6 +189,9 @@ module.exports = async function (options) {
   try {
     module.logger = getLogger(silent, log);
     if (!silent) console.log();
+
+    update(spinner, silent);
+
     await prepare(output, src, modules);
     const spinner = ora();
 
