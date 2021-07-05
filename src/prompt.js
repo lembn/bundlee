@@ -40,6 +40,22 @@ module.exports.prompt = async function (options) {
       when: options.log === defaults.log,
     },
     {
+      name: "cacheLoc",
+      message: "Where is the bundle cache file located? ",
+      default: options.cacheLoc,
+      validate: validate,
+      filter: convertBackslashes,
+      when: options.cacheLoc === defaults.cacheLoc,
+    },
+    {
+      name: "ignore",
+      message: "Where is the bundle ignore file located? ",
+      default: options.ignore,
+      validate: validate,
+      filter: convertBackslashes,
+      when: options.ignore === defaults.ignore,
+    },
+    {
       name: "fast",
       type: "list",
       message: "Should the bundler run in fast mode? ",

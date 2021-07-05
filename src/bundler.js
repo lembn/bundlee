@@ -184,13 +184,13 @@ function fail(error, silent, fast) {
 }
 
 module.exports = async function (options) {
-  const { output, src, modules, fast, silent, log } = options;
+  const { output, src, modules, fast, silent, log, cacheLoc, ignore } = options;
 
   try {
     module.logger = getLogger(silent, log);
     if (!silent) console.log();
 
-    update(spinner, silent);
+    update(silent, modules, cacheLoc, ignore);
 
     await prepare(output, src, modules);
     const spinner = ora();
