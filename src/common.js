@@ -14,4 +14,7 @@ module.exports.defaults = {
   output: "./dist",
   src: "./src",
   modules: "./node_modules",
+  cacheLoc: "./.bundlecache",
+  ignore: "./.bundleignore",
+  genIgnore: false,
 };

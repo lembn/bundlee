@@ -35,7 +35,7 @@ async function compareHashes(newHash, oldHash, prefix = "./", result = { toCopy:
   return result;
 }
 
-module.exports = async function (spinner, silent, modules, cacheLoc) {
+module.exports = async function (silent, modules, cacheLoc, ignore) {
   const spinner = ora();
   if (!silent) spinner.start("Scanning local dependencies...");
 
@@ -43,30 +43,58 @@ module.exports = async function (spinner, silent, modules, cacheLoc) {
   const deps = Object.values(allDeps).filter((value) => /^(file:).*/.test(value));
   if (!deps) return;
 
-  let hashes = {};
-  for (let i = 0; i < deps.length; i++) {
-    const hash = await hashElement(deps[i].replace("file:", ""));
-    hashes[hash.name] = hash;
+  let noCache = false;
+  let bundleCache;
+  try {
+    bundleCache = await fs.readJSON(cacheLoc);
+  } catch {
+    noCache = true;
+    spinner.stop();
+    spinner.start("Updating local dependencies...");
   }
 
-  spinner.stop();
-  if (!silent) spinner.start("Updating local dependencies...");
-  const bundleCache = await fs.readJSON(cacheLoc);
-  const names = Object.keys(bundleCache);
-
-  for (const [name, hashData] of Object.entries(hashes)) {
-    if (!names.includes(name)) await cpy(name, modules, { parents: true });
-    else {
-      const { toCopy, toDelete } = await compareHashes(hashData, bundleCache[name]);
-      for (const { path, parent } in toCopy) {
-        const parentPath = path.join(modules, parent);
-        await fs.ensureDir(parentPath);
-        await fs.copyFile(path, parentPath);
-      }
-      for (const path in toDelete) await fs.remove(path);
+  let hashes = {};
+  for (const i in deps) {
+    const _path = deps[i].replace("file:", "");
+    const hash = await hashElement(_path);
+    hashes[hash.name] = hash;
+    if (noCache) {
+      const targetLoc = path.join(modules, _path);
+      await fs.remove(targetLoc);
+      await fs.ensureDir(targetLoc);
+      await fs.copy(_path, targetLoc);
     }
   }
 
-  spinner.stop();
-  await fs.writeJSON(cacheLoc, hashes);
+  if (noCache) {
+    spinner.stop();
+    await fs.writeJSON(cacheLoc, hashes);
+  } else {
+    if (!silent) {
+      spinner.stop();
+      spinner.start("Updating local dependencies...");
+    }
+
+    const names = Object.keys(bundleCache);
+
+    for (const [name, hashData] of Object.entries(hashes)) {
+      if (!names.includes(name)) {
+        const targetLoc = path.join(modules, name);
+        const ensureMethod = (await fs.stat(name)).isFile() ? fs.ensureFile : fs.ensureDir;
+        await ensureMethod(targetLoc);
+        await fs.copy(name, targetLoc);
+      } else {
+        const { toCopy, toDelete } = await compareHashes(hashData, bundleCache[name]);
+        for (const { path, parent } in toCopy) {
+          const parentPath = path.join(modules, parent);
+          await fs.ensureDir(parentPath);
+          await fs.copy(path, parentPath);
+        }
+        for (const path in toDelete) await fs.remove(path);
+      }
+    }
+
+    if (!silent) spinner.stop();
+    await fs.writeJSON(cacheLoc, hashes);
+  }
 };
