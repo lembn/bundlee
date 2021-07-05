@@ -10,7 +10,14 @@ A CLI to bundle source code and node modules into a distribution folder
 
 # TODO
 
-- Add automatic local dependency update
-- [hashing](https://www.npmjs.com/package/folder-hash)
-- update local dependencies after bundle has been copied
+- test
+
+- add bundle.ignore functionality. bundle.ignore specifies files and folders that should be completely ignored by the bundler. if they specify files or folders in the root package, those files or folders will not be added to the bundle. there should also be syntax to ignore local dependency packages completely, or just disable auto-update for them, but still bundle them.
+- for bundler.ignore files found in local dependecy packages, the bundler should ignore the files and folders that the ignore file points to (relative to the package)
+
+- option to specify custom bundle.ignore path
+- option to specify custom bundle.cache path
+
+- running mode that generates a generic bundle.ignore (README.md, bundle.ignore, package.json, package-lock.json, .gitignore, \*.log, log(s)/)
+
 - publish
