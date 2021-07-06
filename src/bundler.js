@@ -108,6 +108,7 @@ async function copySilent(output, src, modules) {
     success: true,
     messages: `[${label}]:: Bundled to '${output}'`,
     timeTaken: Date.now() - module.start,
+    updatedPackages: module.updated,
     fileCount: module.totalFiles,
     sizeCount: convertSize(module.totalSize),
     sizeUnits: module.unit,
@@ -147,7 +148,7 @@ async function copyVerbose(output, src, modules) {
   const msg = `[${label}]:: Bundled to '${output}'`;
   const time = Date.now() - module.start;
 
-  summarise(true, msg, time, module.totalFiles, convertSize(module.totalSize), module.unit);
+  summarise(true, msg, time, module.updated, module.totalFiles, convertSize(module.totalSize), module.unit);
   module.logger.transports.forEach((t) => {
     if (t.name === "console") t.silent = true;
   });
@@ -155,6 +156,7 @@ async function copyVerbose(output, src, modules) {
     success: true,
     messages: msg,
     timeTaken: time,
+    updatedPackages: module.updated,
     fileCount: module.totalFiles,
     sizeCount: convertSize(module.totalSize),
     sizeUnits: module.unit,
@@ -162,21 +164,23 @@ async function copyVerbose(output, src, modules) {
 }
 
 function fail(error, silent, fast) {
-  const time = module.start ? Date.now() - module.start : "NA";
-  const currentFiles = module.currentFiles === undefined ? "NA" : module.currentFiles;
-  const currentSize = module.currentSize === undefined ? "NA" : module.currentSize;
-  const unit = module.unit || "NA";
+  const time = module.start ? Date.now() - module.start : "N/A";
+  const updated = module.updated === undefined ? "N/A" : module.updated;
+  const currentFiles = module.currentFiles === undefined ? "N/A" : module.currentFiles;
+  const currentSize = module.currentSize === undefined ? "N/A" : module.currentSize;
+  const unit = module.unit || "N/A";
   if (silent)
     module.logger.info("Summary", {
       success: false,
       messages: `[${label}]:: ${error}`,
       timeTaken: time,
+      updatedPackages: updated,
       fileCount: currentFiles,
       sizeCount: currentSize,
       sizeUnits: unit,
     });
   else if (!fast) {
-    summarise(false, `[${label}]:: ${error}`, time, currentFiles, currentSize, unit);
+    summarise(false, `[${label}]:: ${error}`, time, updated, currentFiles, currentSize, unit);
     module.logger.on("finish", () => process.exit(1));
     module.logger.error("Closing...");
     module.logger.end();
@@ -190,7 +194,7 @@ module.exports = async function (options) {
     module.logger = getLogger(silent, log);
     if (!silent) console.log();
 
-    update(silent, modules, cacheLoc, ignore);
+    module.updated = await update(silent, modules, cacheLoc, ignore);
 
     await prepare(output, src, modules);
     const spinner = ora();

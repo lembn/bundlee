@@ -1,7 +1,7 @@
 {
   "name": "js-bundler",
   "version": "1.0.0",
-  "description": "A CLI to bundle source code and node modules into a distribution folder",
+  "description": "A CLI program to bundle source code and node modules into a single folder for distribution and deployment",
   "main": "src/index.js",
   "bin": "src/index.js",
   "scripts": {
@@ -11,6 +11,7 @@
     "bundle",
     "pack",
     "distribution",
+    "dist",
     "deploy"
   ],
   "author": "Lemuel Bodi-Ngwala",
