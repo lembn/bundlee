@@ -10,15 +10,22 @@ A CLI to bundle source code and node modules into a distribution folder
 
 # TODO
 
-- add bundle.ignore functionality. bundle.ignore specifies files and folders that should be completely ignored by the bundler. if they specify files or folders in the root package, those files or folders will not be added to the bundle. there should also be syntax to ignore local dependency packages completely, or just disable auto-update for them, but still bundle them.
-- for bundler.ignore files found in local dependecy packages, the bundler should ignore the files and folders that the ignore file points to (relative to the package)
+- test updater
+- test ignore file
+
+- Support root ignore file (bundler NOT updater). Use https://github.com/sindresorhus/cpy#filter to exclude files present in the root ignore
+
+- remove custom `.bundle*` locations/names. Logging will become true/false and will log to `.bundlelog`, ignore file is `.bundleignore`, cache file is `.bundlecache`
+- remove custon `node_modules` folder
+- implement common.appendModules
 
 - genIgnore functionality. generates a generic bundle.ignore (README.md, bundle.ignore, package.json, package-lock.json, .gitignore, \*.log, log(s)/)
-
-- default/recommended files names should be .bundlecache, .bundleignore, .bundlelog so that in gitignore you can just say `.bundle\*`
 
 - autoupdate
 
 - check which awaits can be removed to allow more concurrency
+- maybe use promise.all for loops instead of async await
+- replace for...in with for...of
+- review usage of cpy where fs-extra.copy can be used
 
 - publish

@@ -2,6 +2,7 @@ const fs = require("fs-extra");
 const { join, basename } = require("path");
 const ora = require("ora");
 const { hashElement } = require("folder-hash");
+const { BUNDLEIGNORE, BUNDLEIGNORE, IGNORESTRUCTURE, appendModules, BUNDLECAHCE, MODULESPATH } = require("./common");
 
 const maxDepth = 2;
 
@@ -41,39 +42,94 @@ async function copy(parent, path) {
   await fs.copy(path, targetLoc);
 }
 
-module.exports = async function (silent, modules, cacheLoc, ignore) {
+async function readIgnore(path) {
+  const ignore = await fs.readJSON(path);
+  let valid = true;
+
+  for (const key in IGNORESTRUCTURE) if (!ignore[key]) ignore[key] = [];
+  for (const key in ignore) {
+    valid = IGNORESTRUCTURE.keys.contains(key) && ignore[key].constructor === Array;
+    if (valid) ignore[key].map((item) => join(path, item));
+  }
+
+  if (!valid) throw `Invalid ignore file at '${path}'.`;
+  else return ignore;
+}
+
+async function getPackageData(noCache) {
+  let hashes = {};
+  let ignores = {};
+  for (const dep of deps) {
+    const path = dep.replace("file:", "");
+    const ignore = await readIgnore(join(path, BUNDLEIGNORE));
+    const hash = await hashElement(path, {
+      files: {
+        exclude: ignore.files,
+      },
+      folders: {
+        exclude: ignore.folders,
+      },
+    });
+    ignores[basename(path)] = ignore;
+    hashes[basename(path)] = hash;
+    if (noCache) {
+      const targetLoc = appendModules(path);
+      await fs.remove(targetLoc);
+      await fs.ensureDir(targetLoc);
+      await fs.copy(path, targetLoc);
+    }
+  }
+
+  return { hashes, ignores };
+}
+
+async function updatePackages(hashes, ignores) {
+  let count;
+  for (const name of hashes) {
+    const ignore = ignores[name];
+    let exclude = [...ignore.files, ...ignore.folders];
+    for (const file of exclude) await fs.remove(file);
+
+    if (!bundleCache.keys.includes(name)) {
+      await copy(MODULESPATH, name);
+      count++;
+    } else {
+      const { toCopy, toDelete } = await compareHashes(hashes[key], bundleCache[name]);
+      if (toCopy.length > 0 || toDelete.length > 0) count++;
+      for (const i in toCopy) await copy(MODULESPATH, toCopy[i]);
+      for (const i in toDelete) await fs.remove(toDelete[i]);
+    }
+  }
+
+  return count;
+}
+
+module.exports = async function (silent) {
   const spinner = ora();
   if (!silent) spinner.start("Scanning local dependencies...");
 
+  //Get deps
   const allDeps = (await fs.readJSON("package.json")).dependencies;
   const deps = Object.values(allDeps).filter((value) => /^(file:).*/.test(value));
   if (!deps) return;
 
+  //Read bundlecache
   let noCache = false;
   let bundleCache;
   try {
-    bundleCache = await fs.readJSON(cacheLoc);
+    bundleCache = await fs.readJSON(BUNDLECAHCE);
   } catch {
     noCache = true;
-    spinner.stop();
-    spinner.start("Updating local dependencies...");
-  }
-
-  let hashes = {};
-  for (const i in deps) {
-    const _path = deps[i].replace("file:", "");
-    const hash = await hashElement(_path);
-    hashes[hash.name] = hash;
-    if (noCache) {
-      const targetLoc = join(modules, _path);
-      await fs.remove(targetLoc);
-      await fs.ensureDir(targetLoc);
-      await fs.copy(_path, targetLoc);
+    if (!silent) {
+      spinner.stop();
+      spinner.start("Updating local dependencies...");
     }
   }
 
+  const { hashes, ignores } = await getPackageData(noCache);
+
   if (noCache) {
-    spinner.stop();
+    if (!silent) spinner.stop();
     await fs.writeJSON(cacheLoc, hashes);
   } else {
     if (!silent) {
@@ -81,21 +137,7 @@ module.exports = async function (silent, modules, cacheLoc, ignore) {
       spinner.start("Updating local dependencies...");
     }
 
-    const names = Object.keys(bundleCache);
-    let count;
-
-    for (const [name, hashData] of Object.entries(hashes)) {
-      if (!names.includes(name)) {
-        await copy(modules, name);
-        count++;
-      } else {
-        const { toCopy, toDelete } = await compareHashes(hashData, bundleCache[name]);
-        if (toCopy.length > 0 || toDelete.length > 0) count++;
-        for (const i in toCopy) await copy(modules, toCopy[i]);
-        for (const i in toDelete) await fs.remove(toDelete[i]);
-      }
-    }
-
+    const count = await updatePackages(hashes, ignores);
     if (!silent) spinner.stop();
     await fs.writeJSON(cacheLoc, hashes);
     return count;

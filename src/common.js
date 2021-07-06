@@ -1,4 +1,9 @@
 const isValid = require("is-valid-path");
+const { join } = require("path");
+
+const MODULESPATH = "node_modules";
+
+module.exports.appendModules = (path) => join(MODULESPATH, path);
 
 module.exports.validate = function (input) {
   valid = isValid(input);
@@ -17,4 +22,12 @@ module.exports.defaults = {
   cacheLoc: "./.bundlecache",
   ignore: "./.bundleignore",
   genIgnore: false,
+};
+
+module.exports.BUNDLEIGNORE = ".bundleignore";
+module.exports.BUNDLECAHCE = ".bundlecache";
+
+module.exports.IGNORESTRUCTURE = {
+  files: [],
+  folders: [],
 };
