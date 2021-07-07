@@ -58,7 +58,6 @@ async function readIgnore(path) {
 
 async function getPackageData(noCache) {
   let hashes = {};
-  let ignores = {};
   for (const dep of deps) {
     const path = dep.replace("file:", "");
     const ignore = await readIgnore(join(path, BUNDLEIGNORE));
@@ -70,7 +69,6 @@ async function getPackageData(noCache) {
         exclude: ignore.folders,
       },
     });
-    ignores[basename(path)] = ignore;
     hashes[basename(path)] = hash;
     if (noCache) {
       const targetLoc = appendModules(path);
@@ -80,16 +78,12 @@ async function getPackageData(noCache) {
     }
   }
 
-  return { hashes, ignores };
+  return hashes;
 }
 
-async function updatePackages(hashes, ignores) {
+async function updatePackages(hashes) {
   let count;
   for (const name of hashes) {
-    const ignore = ignores[name];
-    let exclude = [...ignore.files, ...ignore.folders];
-    for (const file of exclude) await fs.remove(file);
-
     if (!bundleCache.keys.includes(name)) {
       await copy(MODULESPATH, name);
       count++;
@@ -126,7 +120,7 @@ module.exports = async function (silent) {
     }
   }
 
-  const { hashes, ignores } = await getPackageData(noCache);
+  const ashes = await getPackageData(noCache);
 
   if (noCache) {
     if (!silent) spinner.stop();
@@ -137,7 +131,7 @@ module.exports = async function (silent) {
       spinner.start("Updating local dependencies...");
     }
 
-    const count = await updatePackages(hashes, ignores);
+    const count = await updatePackages(hashes);
     if (!silent) spinner.stop();
     await fs.writeJSON(cacheLoc, hashes);
     return count;
