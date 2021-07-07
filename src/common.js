@@ -1,7 +1,7 @@
 const isValid = require("is-valid-path");
 const { join } = require("path");
 
-const MODULESPATH = "node_modules";
+module.exports.MODULESPATH = "node_modules";
 
 module.exports.appendModules = (path) => join(MODULESPATH, path);
 
@@ -18,10 +18,7 @@ module.exports.defaults = {
   log: null,
   output: "./dist",
   src: "./src",
-  modules: "./node_modules",
-  cacheLoc: "./.bundlecache",
-  ignore: "./.bundleignore",
-  genIgnore: false,
+  ignore: false,
 };
 
 module.exports.BUNDLEIGNORE = ".bundleignore";

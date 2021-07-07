@@ -58,29 +58,7 @@ yargs.option("src", {
   normalize: true,
   default: defaults.src,
 });
-yargs.option("m", {
-  alias: "modules",
-  describe: "Set node modules folder path",
-  type: "string",
-  normalize: true,
-  default: defaults.modules,
-});
-yargs.option("c", {
-  alias: "cacheLoc",
-  describe: "Set path to bundle cache file",
-  type: "string",
-  normalize: true,
-  default: defaults.cacheLoc,
-});
-yargs.option("ig", {
-  alias: "ignore",
-  describe: "Set path to bundle ignore file",
-  type: "string",
-  normalize: true,
-  default: defaults.ignore,
-});
-yargs.option("gi", {
-  alias: "genIgnore",
+yargs.option("ignore", {
   describe: "Generate a generic bundle ignore file",
   type: "boolean",
   default: defaults.genIgnore,

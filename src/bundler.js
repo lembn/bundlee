@@ -8,7 +8,7 @@ const cpy = require("cpy");
 const chalk = require("chalk");
 const { summarise } = require("./prompt");
 const update = require("./updater");
-const { readIgnore } = require("./common");
+const { readIgnore, MODULESPATH } = require("./common");
 
 const label = "js-bundler";
 const units = ["B", "kB", "MB", "GB"];
@@ -78,9 +78,9 @@ async function getDirInfo(dirPath) {
   return { fileCount: files.length, size: totalSize };
 }
 
-async function prepare(output, src, modules) {
+async function prepare(output, src) {
   const srcLoc = `${output}/${src.split("/").pop()}`;
-  const modulesLoc = `${output}/${modules.split("/").pop()}`;
+  const modulesLoc = `${output}/${MODULESPATH}`;
 
   try {
     module.logger.info("Peparing bundle output location.");
@@ -100,10 +100,10 @@ async function prepare(output, src, modules) {
   }
 }
 
-async function precaulcate(src, modules) {
+async function precaulcate(src) {
   module.start = Date.now();
   module.srcInfo = await getDirInfo(src);
-  module.modulesInfo = await getDirInfo(modules);
+  module.modulesInfo = await getDirInfo(MODULESPATH);
   module.totalFiles = module.srcInfo.fileCount + module.modulesInfo.fileCount;
   module.totalSize = module.srcInfo.size + module.modulesInfo.size;
   module.currentFiles = 0;
@@ -112,8 +112,8 @@ async function precaulcate(src, modules) {
   module.unit = units[module.index];
 }
 
-async function copySilent(output, src, modules) {
-  await cpy([src, modules], output, cpyOptions);
+async function copySilent(output, src) {
+  await cpy([src, MODULESPATH], output, cpyOptions);
   module.logger.info("Bundle Complete.");
   module.logger.info("Summary", {
     success: true,
@@ -126,7 +126,7 @@ async function copySilent(output, src, modules) {
   });
 }
 
-async function copyVerbose(output, src, modules) {
+async function copyVerbose(output, src) {
   console.log();
   const bar = new Bar({
     format: `Bundle Progress | ${chalk.cyan("{bar}")} | {percentage}% || {speed} ${module.unit}/s || ETA: {_eta}s`,
@@ -140,7 +140,7 @@ async function copyVerbose(output, src, modules) {
   });
 
   const start = Date.now();
-  await cpy([src, modules], output, cpyOptions).on("progress", (progress) => {
+  await cpy([src, MODULESPATH], output, cpyOptions).on("progress", (progress) => {
     const bytesWritten = progress.completedSize - (module.currentSize || 0);
     module.currentSize = progress.completedSize;
     module.currentFiles = progress.completedFiles;
@@ -199,31 +199,31 @@ function fail(error, silent, fast) {
 }
 
 module.exports = async function (options) {
-  const { output, src, modules, fast, silent, log, cacheLoc, ignore } = options;
+  const { output, src, fast, silent, log, cacheLoc, ignore } = options;
 
   try {
     module.logger = getLogger(silent, log);
     if (!silent) console.log();
 
-    module.updated = await update(silent, modules, cacheLoc, ignore);
+    module.updated = await update(silent);
 
-    await prepare(output, src, modules);
+    await prepare(output, src);
     const spinner = ora();
 
     //Bundling
     if (!fast) {
       if (!silent) spinner.start("Calculating...");
-      await precaulcate(src, modules);
+      await precaulcate(src);
       spinner.stop();
       module.logger.info("Calculations complete.");
       module.logger.info("Bundling...");
 
-      if (silent) await copySilent(output, src, modules);
-      else await copyVerbose(output, src, modules);
+      if (silent) await copySilent(output, src);
+      else await copyVerbose(output, src);
     } else {
       //Fast Copy
       spinner.start("Bundling...");
-      await cpy([src, modules], output, cpyOptions);
+      await cpy([src, MODULESPATH], output, cpyOptions);
       if (!silent) spinner.stop();
       module.logger.info("Bundle Complete.");
     }
