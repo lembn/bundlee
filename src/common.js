@@ -3,8 +3,6 @@ const { join } = require("path");
 
 module.exports.MODULESPATH = "node_modules";
 
-module.exports.appendModules = (path) => join(MODULESPATH, path);
-
 module.exports.validate = function (input) {
   valid = isValid(input);
   if (valid) return true;

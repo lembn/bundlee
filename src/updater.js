@@ -2,7 +2,7 @@ const fs = require("fs-extra");
 const { join, basename } = require("path");
 const ora = require("ora");
 const { hashElement } = require("folder-hash");
-const { BUNDLEIGNORE, BUNDLEIGNORE, readIgnore, appendModules, BUNDLECAHCE, MODULESPATH } = require("./common");
+const { BUNDLEIGNORE, BUNDLEIGNORE, readIgnore, BUNDLECAHCE, MODULESPATH } = require("./common");
 
 const maxDepth = 2;
 
@@ -57,7 +57,7 @@ async function getPackageData(noCache) {
     });
     hashes[basename(path)] = hash;
     if (noCache) {
-      const targetLoc = appendModules(path);
+      const targetLoc = join(MODULESPATH, path);
       await fs.remove(targetLoc);
       await fs.ensureDir(targetLoc);
       await fs.copy(path, targetLoc);

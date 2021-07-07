@@ -13,10 +13,6 @@ A CLI to bundle source code and node modules into a distribution folder
 - test updater
 - test ignore file
 
-- remove custom `.bundle*` locations/names. Logging will become true/false and will log to `.bundlelog`, ignore file is `.bundleignore`, cache file is `.bundlecache`
-- remove custon `node_modules` folder
-- implement common.appendModules
-
 - genIgnore functionality. generates a generic bundle.ignore (README.md, .bundle\*, package.json, package-lock.json, .gitignore, \*.log, log(s)/)
 
 - autoupdate

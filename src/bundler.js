@@ -1,5 +1,5 @@
 const fs = require("fs-extra");
-const path = require("path");
+const { join } = require("path");
 const winston = require("winston");
 const { format, transports } = require("winston");
 const { Bar } = require("cli-progress");
@@ -62,7 +62,7 @@ async function getAllFiles(dirPath, allFiles = []) {
   let currentFiles = await fs.readdir(dirPath);
 
   for (let i = 0; i < currentFiles.length; i++) {
-    const currentPath = path.join(dirPath, currentFiles[i]);
+    const currentPath = join(dirPath, currentFiles[i]);
     isDirectory = (await fs.stat(currentPath)).isDirectory();
     if (isDirectory) allFiles = await getAllFiles(currentPath, allFiles);
     else allFiles.push(currentPath);
@@ -79,8 +79,8 @@ async function getDirInfo(dirPath) {
 }
 
 async function prepare(output, src) {
-  const srcLoc = `${output}/${src.split("/").pop()}`;
-  const modulesLoc = `${output}/${MODULESPATH}`;
+  const srcLoc = join(output, src);
+  const modulesLoc = join(output, MODULESPATH);
 
   try {
     module.logger.info("Peparing bundle output location.");
@@ -199,7 +199,7 @@ function fail(error, silent, fast) {
 }
 
 module.exports = async function (options) {
-  const { output, src, fast, silent, log, cacheLoc, ignore } = options;
+  const { output, src, fast, silent, log } = options;
 
   try {
     module.logger = getLogger(silent, log);
