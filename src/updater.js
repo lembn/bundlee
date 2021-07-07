@@ -2,7 +2,7 @@ const fs = require("fs-extra");
 const { join, basename } = require("path");
 const ora = require("ora");
 const { hashElement } = require("folder-hash");
-const { BUNDLEIGNORE, BUNDLEIGNORE, readIgnore, BUNDLECAHCE, MODULESPATH } = require("./common");
+const { BUNDLEIGNORE, readIgnore, BUNDLECAHCE, MODULESPATH } = require("./common");
 
 const maxDepth = 2;
 
@@ -67,7 +67,7 @@ async function getPackageData(noCache) {
   return hashes;
 }
 
-async function updatePackages(hashes) {
+async function updatePackages(hashes, bundleCache) {
   let count;
   for (const name of hashes) {
     if (!bundleCache.keys.includes(name)) {
@@ -106,7 +106,7 @@ module.exports = async function (silent) {
     }
   }
 
-  const ashes = await getPackageData(noCache);
+  const hashes = await getPackageData(noCache);
 
   if (noCache) {
     if (!silent) spinner.stop();
@@ -117,7 +117,7 @@ module.exports = async function (silent) {
       spinner.start("Updating local dependencies...");
     }
 
-    const count = await updatePackages(hashes);
+    const count = await updatePackages(hashes, bundleCache);
     if (!silent) spinner.stop();
     await fs.writeJSON(cacheLoc, hashes);
     return count;

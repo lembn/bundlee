@@ -13,14 +13,16 @@ module.exports.defaults = {
   interactive: false,
   fast: false,
   silent: false,
-  log: null,
+  log: false,
   output: "./dist",
   src: "./src",
   ignore: false,
 };
 
-module.exports.BUNDLEIGNORE = ".bundleignore";
-module.exports.BUNDLECAHCE = ".bundlecache";
+module.exports.BUNDLEPREFIX = ".bundle";
+module.exports.BUNDLEIGNORE = join(this.BUNDLEPREFIX, "ignore");
+module.exports.BUNDLECAHCE = join(this.BUNDLEPREFIX, "cache");
+module.exports.BUNDLELOG = join(this.BUNDLEPREFIX, "log");
 
 module.exports.IGNORESTRUCTURE = {
   files: [],

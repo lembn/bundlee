@@ -25,10 +25,11 @@ module.exports.prompt = async function (options) {
     },
     {
       name: "log",
-      message: "Where should logs be written to? ",
-      default: options.log,
-      validate: validate,
-      filter: convertBackslashes,
+      type: "list",
+      message: "Should the bundler log to a file? ",
+      choices: ["No", "Yes"],
+      default: options.log ? 1 : 0,
+      loop: true,
       when: options.log === defaults.log,
     },
     {

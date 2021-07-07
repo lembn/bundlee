@@ -40,9 +40,8 @@ yargs.option("s", {
 });
 yargs.option("l", {
   alias: "log",
-  describe: "Set path to log file",
-  type: "string",
-  normalize: true,
+  describe: "Turn on file logging",
+  type: "boolean",
   default: defaults.log,
 });
 yargs.option("o", {

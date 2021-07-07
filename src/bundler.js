@@ -8,7 +8,7 @@ const cpy = require("cpy");
 const chalk = require("chalk");
 const { summarise } = require("./prompt");
 const update = require("./updater");
-const { readIgnore, MODULESPATH } = require("./common");
+const { readIgnore, MODULESPATH, BUNDLELOG } = require("./common");
 
 const label = "js-bundler";
 const units = ["B", "kB", "MB", "GB"];
@@ -26,7 +26,7 @@ const cpyOptions = {
 const round1DP = (number) => Math.round(number * 10) / 10;
 const convertSize = (size) => round1DP(size / 1000 ** module.index);
 
-function getLogger(silent, logPath) {
+function getLogger(silent, logToFile) {
   const logger = winston.createLogger();
 
   logger.add(
@@ -42,10 +42,10 @@ function getLogger(silent, logPath) {
     })
   );
 
-  if (logPath)
+  if (logToFile)
     logger.add(
       new transports.File({
-        filename: logPath,
+        filename: BUNDLELOG,
         format: format.combine(
           format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
           format.metadata({
@@ -200,6 +200,7 @@ function fail(error, silent, fast) {
 
 module.exports = async function (options) {
   const { output, src, fast, silent, log } = options;
+  fs.ensureDir(BUNDLEPREFIX);
 
   try {
     module.logger = getLogger(silent, log);
