@@ -12,19 +12,21 @@ const { readIgnore, MODULESPATH, BUNDLELOG } = require("./common");
 
 const label = "js-bundler";
 const units = ["B", "kB", "MB", "GB"];
-let ignore;
-try {
-  ignore = await readIgnore();
-} catch {
-  ignore = {};
-}
 const cpyOptions = {
   parents: true,
-  filter: (file) => !(ignore.files.includes(file) || ignore.folders.includes(file)),
+  filter: (file) => !(module.ignore.files.includes(file) || module.ignore.folders.includes(file)),
 };
 
 const round1DP = (number) => Math.round(number * 10) / 10;
 const convertSize = (size) => round1DP(size / 1000 ** module.index);
+
+async function setIgnore() {
+  try {
+    module.ignore = await readIgnore();
+  } catch {
+    module.ignore = {};
+  }
+}
 
 function getLogger(silent, logToFile) {
   const logger = winston.createLogger();
@@ -201,6 +203,7 @@ function fail(error, silent, fast) {
 module.exports = async function (options) {
   const { output, src, fast, silent, log } = options;
   fs.ensureDir(BUNDLEPREFIX);
+  await setIgnore();
 
   try {
     module.logger = getLogger(silent, log);

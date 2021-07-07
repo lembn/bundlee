@@ -10,13 +10,10 @@ A CLI to bundle source code and node modules into a distribution folder
 
 # TODO
 
-- use better `when` predicate for prompt
-
 - test updater
 - test ignore file
 
-- genIgnore functionality. generates a generic bundle.ignore (README.md, .bundle\*, package.json, package-lock.json, .gitignore, \*.log, log(s)/)
-
+- genIgnore functionality. generates a generic bundle.ignore (README.md, .bundle\*, package.json, package-lock.json, .gitignore, \*.log, log(s)/) (implement into new js file, `generator.js`)
 - autoupdate (implement into index)
 
 - check which awaits can be removed to allow more concurrency

@@ -1,3 +1,4 @@
+const { red } = require("chalk");
 const isValid = require("is-valid-path");
 const { join } = require("path");
 
@@ -6,10 +7,10 @@ module.exports.MODULESPATH = "node_modules";
 module.exports.validate = function (input) {
   valid = isValid(input);
   if (valid) return true;
-  else return "Please enter a valid folder path";
+  else return red("Please enter a valid folder path");
 };
 
-module.exports.defaults = {
+module.exports.DEFAULTS = {
   interactive: false,
   fast: false,
   silent: false,
@@ -41,4 +42,42 @@ module.exports.readIgnore = async function (path = this.BUNDLEIGNORE) {
 
   if (!valid) throw `Invalid ignore file at '${path}'.`;
   else return ignore;
+};
+
+module.exports.OPTIONS = {
+  interactive: {
+    short: "i",
+    long: "interactive",
+    default: false,
+  },
+  fast: {
+    short: "f",
+    long: "fast",
+    defualt: false,
+  },
+  silent: {
+    short: "S",
+    long: "silent",
+    default: false,
+  },
+  log: {
+    short: "l",
+    long: "log",
+    default: false,
+  },
+  output: {
+    short: "o",
+    long: "output",
+    default: "./dist",
+  },
+  src: {
+    short: "s",
+    long: "src",
+    default: "./src",
+  },
+  ignore: {
+    short: "I",
+    long: "ignore",
+    default: false,
+  },
 };

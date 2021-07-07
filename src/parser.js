@@ -1,7 +1,7 @@
 const chalk = require("chalk");
 const yargonaut = require("yargonaut"); // yargonaut first!
 const yargs = require("yargs");
-const { validate, defaults } = require("./common");
+const { validate, OPTIONS } = require("./common");
 
 yargonaut.style("blue");
 yargonaut.helpStyle("green.underline");
@@ -10,57 +10,57 @@ yargonaut.errorsStyle("red.bold");
 yargs.scriptName("js-bundler");
 
 yargs.check((args) => {
-  const paths = [args.output, args.src, args.modules];
-  if (args.log) paths.push(args.log);
   let valid = true;
-  for (const i in paths) {
-    valid = validate(paths[i]);
+  for (const path of [args.output, args.src]) {
+    valid = validate(path);
     if (valid !== true) break;
   }
   return valid;
 });
 
-yargs.option("i", {
-  alias: "interactive",
+yargs.option(OPTIONS.interactive.short, {
+  alias: OPTIONS.interactive.long,
   describe: "Run in interactive mode.",
   type: "boolean",
-  default: defaults.interactive,
+  default: OPTIONS.interactive.default,
 });
-yargs.option("f", {
-  alias: "fast",
+yargs.option(OPTIONS.fast.short, {
+  alias: OPTIONS.fast.long,
   describe: "Run in fast mode (disables progress tracking and reports, does not interfere with logging)",
   type: "boolean",
-  default: defaults.fast,
+  default: OPTIONS.fast.defualt,
 });
-yargs.option("s", {
-  alias: "silent",
+yargs.option(OPTIONS.silent.short, {
+  alias: OPTIONS.silent.long,
   describe: "Run in silent mode (disables console messages, does not interfere with file logging)",
   type: "boolean",
-  default: defaults.silent,
+  default: OPTIONS.silent.default,
 });
-yargs.option("l", {
-  alias: "log",
+yargs.option(OPTIONS.log.short, {
+  alias: OPTIONS.log.long,
   describe: "Turn on file logging",
   type: "boolean",
-  default: defaults.log,
+  default: OPTIONS.log.default,
 });
-yargs.option("o", {
-  alias: "output",
+yargs.option(OPTIONS.output.short, {
+  alias: OPTIONS.output.long,
   describe: "Set output folder path",
   type: "string",
   normalize: true,
-  default: defaults.output,
+  default: OPTIONS.output.default,
 });
-yargs.option("src", {
+yargs.option(OPTIONS.src.short, {
+  alias: OPTIONS.src.long,
   describe: "Set source code folder path",
   type: "string",
   normalize: true,
-  default: defaults.src,
+  default: OPTIONS.src.default,
 });
-yargs.option("ignore", {
+yargs.option(OPTIONS.ignore.short, {
+  alias: OPTIONS.ignore.long,
   describe: "Generate a generic bundle ignore file",
   type: "boolean",
-  default: defaults.genIgnore,
+  default: OPTIONS.ignore.default,
 });
 
 yargs.example([
