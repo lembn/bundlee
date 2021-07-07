@@ -2,7 +2,7 @@ const fs = require("fs-extra");
 const { join, basename } = require("path");
 const ora = require("ora");
 const { hashElement } = require("folder-hash");
-const { BUNDLEIGNORE, BUNDLEIGNORE, IGNORESTRUCTURE, appendModules, BUNDLECAHCE, MODULESPATH } = require("./common");
+const { BUNDLEIGNORE, BUNDLEIGNORE, readIgnore, appendModules, BUNDLECAHCE, MODULESPATH } = require("./common");
 
 const maxDepth = 2;
 
@@ -40,20 +40,6 @@ async function copy(parent, path) {
   if ((await fs.stat(path)).isFile()) await fs.ensureFile(targetLoc);
   else await fs.ensureDir(targetLoc);
   await fs.copy(path, targetLoc);
-}
-
-async function readIgnore(path) {
-  const ignore = await fs.readJSON(path);
-  let valid = true;
-
-  for (const key in IGNORESTRUCTURE) if (!ignore[key]) ignore[key] = [];
-  for (const key in ignore) {
-    valid = IGNORESTRUCTURE.keys.contains(key) && ignore[key].constructor === Array;
-    if (valid) ignore[key].map((item) => join(path, item));
-  }
-
-  if (!valid) throw `Invalid ignore file at '${path}'.`;
-  else return ignore;
 }
 
 async function getPackageData(noCache) {

@@ -8,9 +8,20 @@ const cpy = require("cpy");
 const chalk = require("chalk");
 const { summarise } = require("./prompt");
 const update = require("./updater");
+const { readIgnore } = require("./common");
 
 const label = "js-bundler";
 const units = ["B", "kB", "MB", "GB"];
+let ignore;
+try {
+  ignore = await readIgnore();
+} catch {
+  ignore = {};
+}
+const cpyOptions = {
+  parents: true,
+  filter: (file) => !(ignore.files.includes(file) || ignore.folders.includes(file)),
+};
 
 const round1DP = (number) => Math.round(number * 10) / 10;
 const convertSize = (size) => round1DP(size / 1000 ** module.index);
@@ -102,7 +113,7 @@ async function precaulcate(src, modules) {
 }
 
 async function copySilent(output, src, modules) {
-  await cpy([src, modules], output, { parents: true });
+  await cpy([src, modules], output, cpyOptions);
   module.logger.info("Bundle Complete.");
   module.logger.info("Summary", {
     success: true,
@@ -129,7 +140,7 @@ async function copyVerbose(output, src, modules) {
   });
 
   const start = Date.now();
-  await cpy([src, modules], output, { parents: true }).on("progress", (progress) => {
+  await cpy([src, modules], output, cpyOptions).on("progress", (progress) => {
     const bytesWritten = progress.completedSize - (module.currentSize || 0);
     module.currentSize = progress.completedSize;
     module.currentFiles = progress.completedFiles;
@@ -212,7 +223,7 @@ module.exports = async function (options) {
     } else {
       //Fast Copy
       spinner.start("Bundling...");
-      await cpy([src, modules], output, { parents: true });
+      await cpy([src, modules], output, cpyOptions);
       if (!silent) spinner.stop();
       module.logger.info("Bundle Complete.");
     }

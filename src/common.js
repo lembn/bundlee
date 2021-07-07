@@ -31,3 +31,17 @@ module.exports.IGNORESTRUCTURE = {
   files: [],
   folders: [],
 };
+
+module.exports.readIgnore = async function (path = this.BUNDLEIGNORE) {
+  const ignore = await fs.readJSON(path);
+  let valid = true;
+
+  for (const key in this.IGNORESTRUCTURE) if (!ignore[key]) ignore[key] = [];
+  for (const key in ignore) {
+    valid = this.IGNORESTRUCTURE.keys.contains(key) && ignore[key].constructor === Array;
+    if (valid) ignore[key].map((item) => join(path, item));
+  }
+
+  if (!valid) throw `Invalid ignore file at '${path}'.`;
+  else return ignore;
+};

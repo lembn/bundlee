@@ -10,8 +10,6 @@ A CLI to bundle source code and node modules into a distribution folder
 
 # TODO
 
-- Support root ignore file (bundler NOT updater). Use https://github.com/sindresorhus/cpy#filter to exclude files present in the root ignore
-
 - test updater
 - test ignore file
 
