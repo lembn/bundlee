@@ -36,7 +36,7 @@ module.exports.readIgnore = async function (path = this.BUNDLEIGNORE) {
 
   for (const key in this.IGNORESTRUCTURE) if (!ignore[key]) ignore[key] = [];
   for (const key in ignore) {
-    valid = this.IGNORESTRUCTURE.keys.contains(key) && ignore[key].constructor === Array;
+    valid = Object.keys(this.IGNORESTRUCTURE).contains(key) && ignore[key].constructor === Array;
     if (valid) ignore[key].map((item) => join(path, item));
   }
 

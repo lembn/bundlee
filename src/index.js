@@ -6,7 +6,7 @@ const { prompt } = require("./prompt");
 
 async function main(args) {
   args = args.interactive ? await prompt(args) : args;
-  //await bundle(args);
+  await bundle(args);
 }
 
-//main(parser.argv);
+main(parser.argv);

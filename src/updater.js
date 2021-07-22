@@ -42,7 +42,7 @@ async function copy(parent, path) {
   await fs.copy(path, targetLoc);
 }
 
-async function getPackageData(noCache) {
+async function getPackageData(deps, noCache) {
   let hashes = {};
   for (const dep of deps) {
     const path = dep.replace("file:", "");
@@ -70,7 +70,7 @@ async function getPackageData(noCache) {
 async function updatePackages(hashes, bundleCache) {
   let count;
   for (const name of hashes) {
-    if (!bundleCache.keys.includes(name)) {
+    if (!Object.keys(bundleCache).includes(name)) {
       await copy(MODULESPATH, name);
       count++;
     } else {
@@ -89,9 +89,11 @@ module.exports = async function (silent) {
   if (!silent) spinner.start("Scanning local dependencies...");
 
   //Get deps
-  const allDeps = (await fs.readJSON("package.json")).dependencies;
-  const deps = Object.values(allDeps).filter((value) => /^(file:).*/.test(value));
-  if (!deps) return;
+  const deps = Object.values((await fs.readJSON("package.json")).dependencies).filter((value) => /^(file:).*/.test(value));
+  if (deps.length === 0) {
+    if (!silent) spinner.stop();
+    return 0;
+  }
 
   //Read bundlecache
   let noCache = false;
@@ -106,11 +108,11 @@ module.exports = async function (silent) {
     }
   }
 
-  const hashes = await getPackageData(noCache);
+  const hashes = await getPackageData(deps, noCache);
 
   if (noCache) {
     if (!silent) spinner.stop();
-    await fs.writeJSON(cacheLoc, hashes);
+    await fs.writeJSON(BUNDLECAHCE, hashes);
   } else {
     if (!silent) {
       spinner.stop();
@@ -119,7 +121,7 @@ module.exports = async function (silent) {
 
     const count = await updatePackages(hashes, bundleCache);
     if (!silent) spinner.stop();
-    await fs.writeJSON(cacheLoc, hashes);
+    await fs.writeJSON(BUNDLECAHCE, hashes);
     return count;
   }
 };

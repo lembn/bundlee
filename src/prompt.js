@@ -84,7 +84,7 @@ module.exports.summarise = function (success, message, time, updated, files, siz
   addLine(`${success ? "✅ " : "❌ "} ${chalk.bold("BUNDLE")} ${success ? chalk.green("SUCCESS") : chalk.red("FAILED")}`);
   addLine(`${chalk.bold("Messages:")} ${chalk.italic(message)}.`);
   addLine(`${chalk.bold("Completed in:")} ${chalk.yellowBright(Math.round(time / 1000))} seconds.`);
-  addLine(`${chalk.bold("Updated")} ${chalk.yellowBright(updated)} packages.`);
+  addLine(`${chalk.bold("Updated")} ${chalk.yellowBright(updated)} local packages.`);
   addLine(
     `${chalk.bold("Bundled")} ${chalk.yellowBright(files)} files. ${chalk.bold("TOTAL")}: ${chalk.yellowBright(size)} ${chalk.blue(units)}.`
   );

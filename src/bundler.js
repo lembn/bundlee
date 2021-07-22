@@ -8,7 +8,7 @@ const cpy = require("cpy");
 const chalk = require("chalk");
 const { summarise } = require("./prompt");
 const update = require("./updater");
-const { readIgnore, MODULESPATH, BUNDLELOG } = require("./common");
+const { readIgnore, MODULESPATH, BUNDLELOG, BUNDLEPREFIX } = require("./common");
 
 const label = "js-bundler";
 const units = ["B", "kB", "MB", "GB"];
@@ -24,7 +24,7 @@ async function setIgnore() {
   try {
     module.ignore = await readIgnore();
   } catch {
-    module.ignore = {};
+    module.ignore = { files: [], folders: [] };
   }
 }
 
