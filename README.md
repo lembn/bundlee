@@ -6,12 +6,12 @@ A CLI to bundle source code and node modules into a distribution folder
 
 `js-bunlder` requires all the package's source code to be in one folder. Likewise, all installed node modules should be contained within a single folder. The contents of these folders are copied into the `dist` folder with their internal structure preserved. Any local libraries used in the module should be packaged into a node package (with `npm init`) and installed as a local dependency so they will be contained within the main package's node modules.
 
-> _NOTE: `js-bundler` updates the local packages in bundle's `node_modules` **NOT** the main `node_modules` folder. This is why it is recommended to run from bundle when using `js-bundler`_
+> _NOTE: files/folders to be ingored need to be prefixed with the appropriate `src/` or `node_modules` appropriately in the `ignore.json`_
 
 # TODO
 
 - test updater
-- test ignore file
+- test ignore files for local packages
 
 - remove ignore files from dist folder
 
@@ -25,6 +25,8 @@ A CLI to bundle source code and node modules into a distribution folder
 - replace {} objects with class objects?
 
 - publish
+
+- when `parents` is set to false in `src/bundler.js`'s `copyOptions`, the `cpy` function copies all the files from the source folders _flatly_ into the destination folder without maintaining any of the original folder structure. Does this form of the code still run? If yes consider adding it to fast mode because it really cuts down on bundle time and if no, what would it take to make it work?
 
 - code parser: parses source code to find relative `require()`s, takes the path and copies it into `package.json`, then changes the `require()` to a normal dependency one (replace the path the the package name, but leave any slashes after). It doesnt need to actualy install the package because as long as it is run first, the new package will be picked up by the updater afterwards. This means `npm install [local-package]` never has to be used, the user can just write relative imports in their code and the parser will do the rest.
 - _keep in mind_ should the parser convert all the code or just the dist code, leaving the original source code alone?

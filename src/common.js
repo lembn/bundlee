@@ -1,14 +1,10 @@
 const { red } = require("chalk");
 const isValid = require("is-valid-path");
 const { join } = require("path");
+const { readJSON } = require("fs-extra");
 
 module.exports.MODULESPATH = "node_modules";
-
-module.exports.validate = function (input) {
-  valid = isValid(input);
-  if (valid) return true;
-  else return red("Please enter a valid folder path");
-};
+module.exports.SRCPATH = "src";
 
 module.exports.DEFAULTS = {
   interactive: false,
@@ -16,27 +12,32 @@ module.exports.DEFAULTS = {
   silent: false,
   log: false,
   output: "./dist",
-  src: "./src",
   ignore: false,
 };
 
 module.exports.BUNDLEPREFIX = ".bundle";
-module.exports.BUNDLEIGNORE = join(this.BUNDLEPREFIX, "ignore");
-module.exports.BUNDLECAHCE = join(this.BUNDLEPREFIX, "cache");
-module.exports.BUNDLELOG = join(this.BUNDLEPREFIX, "log");
+module.exports.BUNDLEIGNORE = join(module.exports.BUNDLEPREFIX, "ignore.json");
+module.exports.BUNDLECAHCE = join(module.exports.BUNDLEPREFIX, "cache");
+module.exports.BUNDLELOG = join(module.exports.BUNDLEPREFIX, "log");
 
 module.exports.IGNORESTRUCTURE = {
   files: [],
   folders: [],
 };
 
-module.exports.readIgnore = async function (path = this.BUNDLEIGNORE) {
-  const ignore = await fs.readJSON(path);
+module.exports.validate = function (input) {
+  valid = isValid(input);
+  if (valid) return true;
+  else return red("Please enter a valid folder path");
+};
+
+module.exports.readIgnore = async function (path = module.exports.BUNDLEIGNORE) {
+  const ignore = await readJSON(path);
   let valid = true;
 
-  for (const key in this.IGNORESTRUCTURE) if (!ignore[key]) ignore[key] = [];
+  for (const key in module.exports.IGNORESTRUCTURE) if (!ignore[key]) ignore[key] = [];
   for (const key in ignore) {
-    valid = Object.keys(this.IGNORESTRUCTURE).contains(key) && ignore[key].constructor === Array;
+    valid = key in module.exports.IGNORESTRUCTURE && ignore[key].constructor === Array;
     if (valid) ignore[key].map((item) => join(path, item));
   }
 
@@ -56,7 +57,7 @@ module.exports.OPTIONS = {
     defualt: false,
   },
   silent: {
-    short: "S",
+    short: "s",
     long: "silent",
     default: false,
   },
@@ -69,11 +70,6 @@ module.exports.OPTIONS = {
     short: "o",
     long: "output",
     default: "./dist",
-  },
-  src: {
-    short: "s",
-    long: "src",
-    default: "./src",
   },
   ignore: {
     short: "I",

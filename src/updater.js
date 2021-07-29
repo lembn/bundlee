@@ -70,7 +70,7 @@ async function getPackageData(deps, noCache) {
 async function updatePackages(hashes, bundleCache) {
   let count;
   for (const name of hashes) {
-    if (!Object.keys(bundleCache).includes(name)) {
+    if (!(name in bundleCache)) {
       await copy(MODULESPATH, name);
       count++;
     } else {

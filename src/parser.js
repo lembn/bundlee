@@ -9,14 +9,7 @@ yargonaut.errorsStyle("red.bold");
 
 yargs.scriptName("js-bundler");
 
-yargs.check((args) => {
-  let valid = true;
-  for (const path of [args.output, args.src]) {
-    valid = validate(path);
-    if (valid !== true) break;
-  }
-  return valid;
-});
+yargs.check((args) => validate(args.output));
 
 yargs.option(OPTIONS.interactive.short, {
   alias: OPTIONS.interactive.long,
@@ -48,13 +41,6 @@ yargs.option(OPTIONS.output.short, {
   type: "string",
   normalize: true,
   default: OPTIONS.output.default,
-});
-yargs.option(OPTIONS.src.short, {
-  alias: OPTIONS.src.long,
-  describe: "Set source code folder path",
-  type: "string",
-  normalize: true,
-  default: OPTIONS.src.default,
 });
 yargs.option(OPTIONS.ignore.short, {
   alias: OPTIONS.ignore.long,

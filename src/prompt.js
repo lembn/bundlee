@@ -1,5 +1,5 @@
 const inquirer = require("inquirer");
-const { validate, OPTIONS } = require("./common");
+const { OPTIONS } = require("./common");
 const chalk = require("chalk");
 
 const convertBackslashes = (input) => input.replace(/\\/g, "/");
@@ -22,14 +22,6 @@ module.exports.prompt = async function (options) {
       validate: validate,
       filter: convertBackslashes,
       when: !(flags.includes(OPTIONS.output.long) || flags.includes(OPTIONS.output.short)),
-    },
-    {
-      name: OPTIONS.src.long,
-      message: "Where is the source code located? ",
-      default: options.src,
-      validate: validate,
-      filter: convertBackslashes,
-      when: !(flags.includes(OPTIONS.src.long) || flags.includes(OPTIONS.src.short)),
     },
     {
       name: OPTIONS.log.long,
