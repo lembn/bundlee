@@ -1,7 +1,7 @@
 const { red } = require("chalk");
 const isValid = require("is-valid-path");
 const { join } = require("path");
-const { readJSON } = require("fs-extra");
+const { readJSON, pathExists } = require("fs-extra");
 
 module.exports.MODULESPATH = "node_modules";
 module.exports.SRCPATH = "src";
@@ -15,12 +15,12 @@ module.exports.DEFAULTS = {
   ignore: false,
 };
 
-module.exports.BUNDLEPREFIX = ".bundle";
-module.exports.BUNDLEIGNORE = join(module.exports.BUNDLEPREFIX, "ignore.json");
-module.exports.BUNDLECAHCE = join(module.exports.BUNDLEPREFIX, "cache");
-module.exports.BUNDLELOG = join(module.exports.BUNDLEPREFIX, "log");
+module.exports.BUNDLEPREFIX = BUNDLEPREFIX = ".bundle";
+module.exports.BUNDLEIGNORE = join(BUNDLEPREFIX, "ignore.json");
+module.exports.BUNDLECAHCE = join(BUNDLEPREFIX, "cache");
+module.exports.BUNDLELOG = join(BUNDLEPREFIX, "log");
 
-module.exports.IGNORESTRUCTURE = {
+module.exports.IGNORESTRUCTURE = IGNORESTRUCTURE = {
   files: [],
   folders: [],
 };
@@ -32,12 +32,13 @@ module.exports.validate = function (input) {
 };
 
 module.exports.readIgnore = async function (path = module.exports.BUNDLEIGNORE) {
+  if (!(await pathExists(path))) return IGNORESTRUCTURE;
   const ignore = await readJSON(path);
   let valid = true;
 
-  for (const key in module.exports.IGNORESTRUCTURE) if (!ignore[key]) ignore[key] = [];
+  for (const key in IGNORESTRUCTURE) if (!ignore[key]) ignore[key] = [];
   for (const key in ignore) {
-    valid = key in module.exports.IGNORESTRUCTURE && ignore[key].constructor === Array;
+    valid = key in IGNORESTRUCTURE && ignore[key].constructor === Array;
     if (valid) ignore[key].map((item) => join(path, item));
   }
 

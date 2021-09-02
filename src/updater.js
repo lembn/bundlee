@@ -42,7 +42,7 @@ async function copy(parent, path) {
   await fs.copy(path, targetLoc);
 }
 
-async function getPackageData(deps, noCache) {
+async function getPackageData(deps) {
   let hashes = {};
   for (const dep of deps) {
     const path = dep.replace("file:", "");
@@ -56,32 +56,36 @@ async function getPackageData(deps, noCache) {
       },
     });
     hashes[basename(path)] = hash;
-    if (noCache) {
-      const targetLoc = join(MODULESPATH, path);
-      await fs.remove(targetLoc);
-      await fs.ensureDir(targetLoc);
-      await fs.copy(path, targetLoc);
-    }
   }
 
   return hashes;
 }
 
 async function updatePackages(hashes, bundleCache) {
-  let count;
-  for (const name of hashes) {
-    if (!(name in bundleCache)) {
-      await copy(MODULESPATH, name);
-      count++;
-    } else {
-      const { toCopy, toDelete } = await compareHashes(hashes[key], bundleCache[name]);
-      if (toCopy.length > 0 || toDelete.length > 0) count++;
-      for (const i in toCopy) await copy(MODULESPATH, toCopy[i]);
-      for (const i in toDelete) await fs.remove(toDelete[i]);
+  if (bundleCache) {
+    let count = 0;
+    for (const name in hashes) {
+      if (!(name in bundleCache)) {
+        await copy(MODULESPATH, name);
+        count++;
+      } else {
+        const { toCopy, toDelete } = await compareHashes(hashes[name], bundleCache[name]);
+        if (toCopy.length > 0 || toDelete.length > 0) count++;
+        for (const i in toCopy) await copy(MODULESPATH, toCopy[i]);
+        for (const i in toDelete) await fs.remove(toDelete[i]);
+      }
     }
-  }
+    return count;
+  } else {
+    for (const name in hashes) {
+      const targetLoc = join(MODULESPATH, name);
+      await fs.remove(targetLoc);
+      await fs.ensureDir(targetLoc);
+      await fs.copy(name, targetLoc);
+    }
 
-  return count;
+    return Object.keys(hashes).length;
+  }
 }
 
 module.exports = async function (silent) {
@@ -96,32 +100,21 @@ module.exports = async function (silent) {
   }
 
   //Read bundlecache
-  let noCache = false;
   let bundleCache;
   try {
     bundleCache = await fs.readJSON(BUNDLECAHCE);
   } catch {
-    noCache = true;
-    if (!silent) {
-      spinner.stop();
-      spinner.start("Updating local dependencies...");
-    }
+    bundleCache = undefined;
   }
 
-  const hashes = await getPackageData(deps, noCache);
-
-  if (noCache) {
-    if (!silent) spinner.stop();
-    await fs.writeJSON(BUNDLECAHCE, hashes);
-  } else {
-    if (!silent) {
-      spinner.stop();
-      spinner.start("Updating local dependencies...");
-    }
-
-    const count = await updatePackages(hashes, bundleCache);
-    if (!silent) spinner.stop();
-    await fs.writeJSON(BUNDLECAHCE, hashes);
-    return count;
+  const hashes = await getPackageData(deps);
+  if (!silent) {
+    spinner.stop();
+    spinner.start("Updating local dependencies...");
   }
+
+  const count = await updatePackages(hashes, bundleCache);
+  if (!silent) spinner.stop();
+  await fs.writeJSON(BUNDLECAHCE, hashes);
+  return count;
 };
