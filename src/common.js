@@ -40,6 +40,7 @@ module.exports.readIgnore = async function (path = module.exports.BUNDLEIGNORE) 
   for (const key in ignore) {
     valid = key in IGNORESTRUCTURE && ignore[key].constructor === Array;
     if (valid) ignore[key].map((item) => join(path, item));
+    else break;
   }
 
   if (!valid) throw `Invalid ignore file at '${path}'.`;

@@ -2,13 +2,12 @@ const fs = require("fs-extra");
 const { join, basename } = require("path");
 const ora = require("ora");
 const { hashElement } = require("folder-hash");
+const glob = require("glob-promise");
 const { BUNDLEIGNORE, readIgnore, BUNDLECAHCE, MODULESPATH } = require("./common");
-
-const maxDepth = 2;
 
 const getNames = (hash) => hash.children.map((childObj) => childObj.name);
 
-async function compareHashes(newHash, oldHash, prefix = "./", result = { toCopy: [], toDelete: [] }, currentDepth = 0) {
+async function compareHashes(newHash, oldHash, prefix = "./", result = { toCopy: [], toDelete: [] }) {
   if (oldHash.hash === newHash.hash) return result;
 
   const root = join(prefix, newHash.name);
@@ -25,14 +24,19 @@ async function compareHashes(newHash, oldHash, prefix = "./", result = { toCopy:
   for (const nameIndex in newChildren) {
     const name = newChildren[nameIndex];
     const childPath = join(root, name);
-    if (!oldChildren.includes(name) || currentDepth === maxDepth) result.toCopy.push(childPath);
+    if (!oldChildren.includes(name)) result.toCopy.push(childPath);
     else {
       const oldChild = oldHash.children[oldChildren.indexOf(name)];
-      result = await compareHashes(newHash.children[nameIndex], oldChild, root, result, ++currentDepth);
+      result = await compareHashes(newHash.children[nameIndex], oldChild, root, result);
     }
   }
 
   return result;
+}
+
+async function copyFilter(item, ignore) {
+  const patterns = (await fs.stat(item)).isFile() ? ignore.files : ignore.folders;
+  return !(await glob(`{${patterns.join(",")}}`, { cwd: "test" })).includes(item);
 }
 
 async function copy(parent, path) {
@@ -43,7 +47,7 @@ async function copy(parent, path) {
 }
 
 async function getPackageData(deps) {
-  let hashes = {};
+  let packageData = {};
   for (const dep of deps) {
     const path = dep.replace("file:", "");
     const ignore = await readIgnore(join(path, BUNDLEIGNORE));
@@ -55,21 +59,21 @@ async function getPackageData(deps) {
         exclude: ignore.folders,
       },
     });
-    hashes[basename(path)] = hash;
+    packageData[basename(path)] = { hash, ignore };
   }
 
-  return hashes;
+  return packageData;
 }
 
-async function updatePackages(hashes, bundleCache) {
+async function updatePackages(packageData, bundleCache) {
   if (bundleCache) {
     let count = 0;
-    for (const name in hashes) {
+    for (const name in packageData) {
       if (!(name in bundleCache)) {
         await copy(MODULESPATH, name);
         count++;
       } else {
-        const { toCopy, toDelete } = await compareHashes(hashes[name], bundleCache[name]);
+        const { toCopy, toDelete } = await compareHashes(packageData[name].hash, bundleCache[name]);
         if (toCopy.length > 0 || toDelete.length > 0) count++;
         for (const i in toCopy) await copy(MODULESPATH, toCopy[i]);
         for (const i in toDelete) await fs.remove(toDelete[i]);
@@ -77,14 +81,16 @@ async function updatePackages(hashes, bundleCache) {
     }
     return count;
   } else {
-    for (const name in hashes) {
+    for (const name in packageData) {
       const targetLoc = join(MODULESPATH, name);
       await fs.remove(targetLoc);
       await fs.ensureDir(targetLoc);
-      await fs.copy(name, targetLoc);
+      await fs.copy(name, targetLoc, {
+        filter: async (item) => await copyFilter(item, packageData[name].ignore),
+      });
     }
 
-    return Object.keys(hashes).length;
+    return Object.keys(packageData).length;
   }
 }
 
@@ -107,14 +113,16 @@ module.exports = async function (silent) {
     bundleCache = undefined;
   }
 
-  const hashes = await getPackageData(deps);
+  const packageData = await getPackageData(deps);
   if (!silent) {
     spinner.stop();
     spinner.start("Updating local dependencies...");
   }
 
-  const count = await updatePackages(hashes, bundleCache);
+  const count = await updatePackages(packageData, bundleCache);
   if (!silent) spinner.stop();
+  hashes = {};
+  for (const name in packageData) hashes[name] = packageData[name].hash;
   await fs.writeJSON(BUNDLECAHCE, hashes);
   return count;
 };
