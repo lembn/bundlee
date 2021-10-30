@@ -6,27 +6,17 @@ A CLI to bundle source code and node modules into a distribution folder
 
 `js-bunlder` requires all the package's source code to be in one folder. Likewise, all installed node modules should be contained within a single folder. The contents of these folders are copied into the `dist` folder with their internal structure preserved. Any local libraries used in the module should be packaged into a node package (with `npm init`) and installed as a local dependency so they will be contained within the main package's node modules.
 
-> _NOTE: files/folders to be ingored need to be prefixed with the appropriate `src/` or `node_modules` appropriately in the `ignore.json`_
+`ignore.json` uses glob syntax
+
+> _NOTE: if the user desires specific files/folders within local packages to be ignored, the files/folders need to added to the local package's `ignore.json` before the bundler's local package update is run. During the first local package update, the files/folders will be brought into the main package's `node_modules/` folder so will end up being copied into the output folder from then on. This is because `js-bundler` WILL NOT delete from `node_modules/` so if the user wants these files/folders not to be in the output folder (after they've already been brought in) they will need to manually delete them from the main package's `node_modules/` folder and add them to the local package's `ignore.json`. This will prevent them being copied back into the main package's `node_modules/` folder, therefore preventing them from being in the output folder._
+
+> _NOTE: files/folders to be ignored need to be prefixed with the appropriate `src/` or `node_modules/` appropriately in the `ignore.json`_
 
 # TODO
 
-- test updater
-- test ignore files for local packages
-
-- remove ignore files from dist folder
-
-- genIgnore functionality. generates a generic bundle.ignore (README.md, .bundle\*, package.json, package-lock.json, .gitignore, \*.log, log(s)/) (implement into new js file, `generator.js`)
-- autoupdate (implement into index)
-
-- check which awaits can be removed to allow more concurrency
-- maybe use promise.all for loops instead of async await
-- replace for...in with for...of
-- review usage of cpy where fs-extra.copy can be used
-- replace {} objects with class objects?
-
+- autoupdate (implement into `index.js`)
 - publish
-
+- typescript?
 - when `parents` is set to false in `src/bundler.js`'s `copyOptions`, the `cpy` function copies all the files from the source folders _flatly_ into the destination folder without maintaining any of the original folder structure. Does this form of the code still run? If yes consider adding it to fast mode because it really cuts down on bundle time and if no, what would it take to make it work?
-
 - code parser: parses source code to find relative `require()`s, takes the path and copies it into `package.json`, then changes the `require()` to a normal dependency one (replace the path the the package name, but leave any slashes after). It doesnt need to actualy install the package because as long as it is run first, the new package will be picked up by the updater afterwards. This means `npm install [local-package]` never has to be used, the user can just write relative imports in their code and the parser will do the rest.
 - _keep in mind_ should the parser convert all the code or just the dist code, leaving the original source code alone?

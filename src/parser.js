@@ -42,11 +42,11 @@ yargs.option(OPTIONS.output.short, {
   normalize: true,
   default: OPTIONS.output.default,
 });
-yargs.option(OPTIONS.ignore.short, {
-  alias: OPTIONS.ignore.long,
+yargs.option(OPTIONS.genIgnore.short, {
+  alias: OPTIONS.genIgnore.long,
   describe: "Generate a generic bundle ignore file",
   type: "boolean",
-  default: OPTIONS.ignore.default,
+  default: OPTIONS.genIgnore.default,
 });
 
 yargs.example([

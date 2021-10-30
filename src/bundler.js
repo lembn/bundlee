@@ -104,7 +104,7 @@ async function prepare(output) {
 
 async function precaulcate() {
   module.start = Date.now();
-  module.srcInfo = await getDirInfo(SRCPATH);
+  module.srcInfo = getDirInfo(SRCPATH);
   module.modulesInfo = await getDirInfo(MODULESPATH);
   module.totalFiles = module.srcInfo.fileCount + module.modulesInfo.fileCount;
   module.totalSize = module.srcInfo.size + module.modulesInfo.size;

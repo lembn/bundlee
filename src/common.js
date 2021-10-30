@@ -38,8 +38,8 @@ module.exports.readIgnore = async function (path = module.exports.BUNDLEIGNORE) 
 
   for (const key in IGNORESTRUCTURE) if (!ignore[key]) ignore[key] = [];
   for (const key in ignore) {
-    valid = key in IGNORESTRUCTURE && ignore[key].constructor === Array;
-    if (valid) ignore[key].map((item) => join(path, item));
+    valid = key in IGNORESTRUCTURE && ignore[key].constructor === Array && ignore[key].every((x) => typeof x === "string");
+    if (valid) ignore[key].map((item) => join(path, item.replace("\\", "/")));
     else break;
   }
 
@@ -73,9 +73,9 @@ module.exports.OPTIONS = {
     long: "output",
     default: "./dist",
   },
-  ignore: {
-    short: "I",
-    long: "ignore",
+  genIgnore: {
+    short: "g",
+    long: "genIgnore",
     default: false,
   },
 };

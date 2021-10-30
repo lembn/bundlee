@@ -75,8 +75,8 @@ async function updatePackages(packageData, bundleCache) {
       } else {
         const { toCopy, toDelete } = await compareHashes(packageData[name].hash, bundleCache[name]);
         if (toCopy.length > 0 || toDelete.length > 0) count++;
-        for (const i in toCopy) await copy(MODULESPATH, toCopy[i]);
-        for (const i in toDelete) await fs.remove(toDelete[i]);
+        for (const item of toCopy) await copy(MODULESPATH, item);
+        for (const item of toDelete) await fs.remove(item);
       }
     }
     return count;
@@ -99,8 +99,14 @@ module.exports = async function (silent) {
   if (!silent) spinner.start("Scanning local dependencies...");
 
   //Get deps
-  const deps = Object.values((await fs.readJSON("package.json")).dependencies).filter((value) => /^(file:).*/.test(value));
-  if (deps.length === 0) {
+  const deps = (await fs.readJSON("package.json")).dependencies;
+  if (!deps) {
+    if (!silent) spinner.stop();
+    return 0;
+  }
+
+  const localDeps = Object.values(deps).filter((value) => /^(file:).*/.test(value));
+  if (!localDeps.length === 0) {
     if (!silent) spinner.stop();
     return 0;
   }
@@ -113,7 +119,7 @@ module.exports = async function (silent) {
     bundleCache = undefined;
   }
 
-  const packageData = await getPackageData(deps);
+  const packageData = await getPackageData(localDeps);
   if (!silent) {
     spinner.stop();
     spinner.start("Updating local dependencies...");
