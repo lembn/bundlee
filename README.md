@@ -14,7 +14,7 @@ A CLI to bundle source code and node modules into a distribution folder
 
 # TODO
 
-- autoupdate (implement into `index.js`)
+- test autoupdate
 - publish
 - typescript?
 - when `parents` is set to false in `src/bundler.js`'s `copyOptions`, the `cpy` function copies all the files from the source folders _flatly_ into the destination folder without maintaining any of the original folder structure. Does this form of the code still run? If yes consider adding it to fast mode because it really cuts down on bundle time and if no, what would it take to make it work?
