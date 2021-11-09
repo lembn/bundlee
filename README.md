@@ -14,6 +14,7 @@ A CLI to bundle source code and node modules into a distribution folder
 
 # TODO
 
+- publicise
 - test autoupdate
 - publish
 - typescript?
