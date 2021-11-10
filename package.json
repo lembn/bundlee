@@ -1,5 +1,5 @@
 {
-  "name": "js-bundler",
+  "name": "jsbundler",
   "version": "1.0.0",
   "description": "A CLI program to bundle source code and node modules into a single folder for distribution and deployment",
   "main": "src/index.js",
@@ -35,10 +35,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/lembn/js-bundler"
+    "url": "https://github.com/lembn/jsbundler"
   },
   "bugs": {
-    "url": "https://github.com/lembn/js-bundler/issues"
+    "url": "https://github.com/lembn/jsbundler/issues"
   },
-  "homepage": "https://github.com/lembn/js-bundler#readme"
+  "homepage": "https://github.com/lembn/jsbundler#readme"
 }

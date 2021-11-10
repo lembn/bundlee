@@ -9,8 +9,8 @@ async function main(args) {
   const AutoGitUpdate = require("auto-git-update");
 
   const config = {
-    repository: "https://github.com/lembn/js-bundler",
-    tempLocation: "./js-bundler-tmp/",
+    repository: "https://github.com/lembn/jsbundler",
+    tempLocation: "./jsbundler-tmp/",
     executeOnComplete: process.argv0,
   };
 
