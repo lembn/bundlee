@@ -16,7 +16,7 @@ yargonaut.style("blue");
 yargonaut.helpStyle("green.underline");
 yargonaut.errorsStyle("red.bold");
 
-yargs.scriptName("jsbundler");
+yargs.scriptName("bundlee");
 
 yargs.check((args) => validate(args.output));
 

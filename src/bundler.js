@@ -10,7 +10,7 @@ const { summarise } = require("./prompt");
 const update = require("./updater");
 const { readIgnore, SRCPATH, MODULESPATH, BUNDLELOG, BUNDLEPREFIX } = require("./common");
 
-const label = "jsbundler";
+const label = "bundlee";
 const units = ["B", "kB", "MB", "GB"];
 const cpyOptions = {
   parents: true,

@@ -9,9 +9,9 @@ module.exports = async function () {
   const spinner = ora();
   spinner.start("Comparing versions...");
 
-  const tempLocation = await fs.mkdtemp(path.join(os.tmpdir(), "jsbundler-"));
+  const tempLocation = await fs.mkdtemp(path.join(os.tmpdir(), "bundlee-"));
   const updater = new AutoGitUpdate({
-    repository: "https://github.com/lembn/jsbundler",
+    repository: "https://github.com/lembn/bundlee",
     tempLocation,
     executeOnComplete: process.argv0,
   });

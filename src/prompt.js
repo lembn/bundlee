@@ -85,7 +85,7 @@ module.exports.summarise = function (success, message, time, updated, files, siz
 };
 
 module.exports.alertUpdate = function (upToDate, version) {
-  if (upToDate) console.log(`${chalk.green("INFO")}: jsbundler is already up-to-date.`);
-  else console.log(`${chalk.green("INFO")}: jsbundler has been updated to the most recent version.`);
+  if (upToDate) console.log(`${chalk.green("INFO")}: bundlee is already up-to-date.`);
+  else console.log(`${chalk.green("INFO")}: bundlee has been updated to the most recent version.`);
   console.log(`${chalk.green("INFO")}: Running on version ${chalk.yellow(version)}`);
 };
