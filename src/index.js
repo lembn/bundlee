@@ -4,22 +4,15 @@ const parser = require("./parser");
 const bundle = require("./bundler");
 const { prompt } = require("./prompt");
 const generate = require("./generator");
+const checkUpdates = require("./versioning");
 
 async function main(args) {
-  const AutoGitUpdate = require("auto-git-update");
-
-  const config = {
-    repository: "https://github.com/lembn/jsbundler",
-    tempLocation: "./jsbundler-tmp/",
-    executeOnComplete: process.argv0,
-  };
-
-  const updater = new AutoGitUpdate(config);
-
-  updater.autoUpdate();
-
+  if (args.update) {
+    await checkUpdates();
+    return;
+  }
   if (args.genIgnore) {
-    generate();
+    await generate();
     return;
   }
   args = args.interactive ? await prompt(args) : args;

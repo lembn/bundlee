@@ -83,3 +83,8 @@ module.exports.summarise = function (success, message, time, updated, files, siz
 
   console.log(`└ ${"─".repeat(width - 2)}`);
 };
+
+module.exports.alertUpdate = function (updated) {
+  if (!updated) return;
+  console.log(`${chalk.green("INFO")}: Package is updated to the most recent version`);
+};

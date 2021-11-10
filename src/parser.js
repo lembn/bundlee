@@ -3,6 +3,15 @@ const yargonaut = require("yargonaut"); // yargonaut first!
 const yargs = require("yargs");
 const { validate, OPTIONS } = require("./common");
 
+function createOption(option, description) {
+  yargs.option(option.short, {
+    alias: option.long,
+    describe: description,
+    type: typeof option.default,
+    default: option.default,
+  });
+}
+
 yargonaut.style("blue");
 yargonaut.helpStyle("green.underline");
 yargonaut.errorsStyle("red.bold");
@@ -11,43 +20,13 @@ yargs.scriptName("jsbundler");
 
 yargs.check((args) => validate(args.output));
 
-yargs.option(OPTIONS.interactive.short, {
-  alias: OPTIONS.interactive.long,
-  describe: "Run in interactive mode.",
-  type: "boolean",
-  default: OPTIONS.interactive.default,
-});
-yargs.option(OPTIONS.fast.short, {
-  alias: OPTIONS.fast.long,
-  describe: "Run in fast mode (disables progress tracking and reports, does not interfere with logging)",
-  type: "boolean",
-  default: OPTIONS.fast.defualt,
-});
-yargs.option(OPTIONS.silent.short, {
-  alias: OPTIONS.silent.long,
-  describe: "Run in silent mode (disables console messages, does not interfere with file logging)",
-  type: "boolean",
-  default: OPTIONS.silent.default,
-});
-yargs.option(OPTIONS.log.short, {
-  alias: OPTIONS.log.long,
-  describe: "Turn on file logging",
-  type: "boolean",
-  default: OPTIONS.log.default,
-});
-yargs.option(OPTIONS.output.short, {
-  alias: OPTIONS.output.long,
-  describe: "Set output folder path",
-  type: "string",
-  normalize: true,
-  default: OPTIONS.output.default,
-});
-yargs.option(OPTIONS.genIgnore.short, {
-  alias: OPTIONS.genIgnore.long,
-  describe: "Generate a generic bundle ignore file",
-  type: "boolean",
-  default: OPTIONS.genIgnore.default,
-});
+createOption(OPTIONS.interactive, "Run in interactive mode.");
+createOption(OPTIONS.fast, "Run in fast mode (disables progress tracking and reports, does not interfere with logging)");
+createOption(OPTIONS.silent, "Run in silent mode (disables console messages, does not interfere with file logging)");
+createOption(OPTIONS.log, "Turn on file logging");
+createOption(OPTIONS.output, "Set output folder path");
+createOption(OPTIONS.genIgnore, "Generate a generic bundle ignore file");
+createOption(OPTIONS.update, "Check for updates and upadate the package if one is available");
 
 yargs.example([
   ["$0", "Run with defualts"],

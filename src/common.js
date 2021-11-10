@@ -78,4 +78,9 @@ module.exports.OPTIONS = {
     long: "genIgnore",
     default: false,
   },
+  update: {
+    short: "u",
+    long: "update",
+    default: false,
+  },
 };
